@@ -21,12 +21,12 @@
 
 /*------------------------- Описание класса управления общим модулем */
 
-  class RSS_Module_Main : public RSS_Kernel {
+  class Crowd_Module_Main : public Crowd_Kernel {
 
     public:
 
      static
-      struct RSS_Module_Main_instr *mInstrList ;          /* Список команд */
+      struct Crowd_Module_Main_instr *mInstrList ;          /* Список команд */
 
     public:
      virtual         int  vExecuteCmd   (const char *) ;        /* Выполнить команду */
@@ -63,20 +63,20 @@
                     void  iDebug        (char *, char *) ;
 
     public:
-	                  RSS_Module_Main() ;                   /* Конструктор */
-	                 ~RSS_Module_Main() ;                   /* Деструктор */
+	                  Crowd_Module_Main() ;                   /* Конструктор */
+	                 ~Crowd_Module_Main() ;                   /* Деструктор */
                                             } ;
 
 /*-------------------------------------------- Инструкции управления */
 
- struct RSS_Module_Main_instr {
+ struct Crowd_Module_Main_instr {
 
-           char                   *name_full ;         /* Полное имя команды */
-           char                   *name_shrt ;         /* Короткое имя команды */
-           char                   *help_row ;          /* HELP - строка */
-           char                   *help_full ;         /* HELP - полный */
-            int (RSS_Module_Main::*process)(char *) ;  /* Процедура выполнения команды */
-                              }  ;
+           char                     *name_full ;         /* Полное имя команды */
+           char                     *name_shrt ;         /* Короткое имя команды */
+           char                     *help_row ;          /* HELP - строка */
+           char                     *help_full ;         /* HELP - полный */
+            int (Crowd_Module_Main::*process)(char *) ;  /* Процедура выполнения команды */
+                                }  ;
 
 /*-------------------------------------------------------- Прототипы */
 

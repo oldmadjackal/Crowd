@@ -12,9 +12,9 @@
 
 #include "Controls.h"
 
-//#include "..\RSS_Feature\RSS_Feature.h"
-//#include "..\RSS_Object\RSS_Object.h"
-#include "..\RSS_Kernel\RSS_Kernel.h"
+#include "..\Crowd_Feature\Crowd_Feature.h"
+#include "..\Crowd_Object\Crowd_Object.h"
+#include "..\Crowd_Kernel\Crowd_Kernel.h"
 
 #include "CrowdRoot.h"
 
@@ -25,15 +25,15 @@
 
 /*--------------------------------------------- Системные переменные */
 
- extern  RSS_Module_Main  Kernel ;    /* Системное ядро */
+ extern  Crowd_Module_Main  Kernel ;    /* Системное ядро */
 
-#define  SEND_ERROR(text)      SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
+#define  SEND_ERROR(text)      SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
                                            (WPARAM)_USER_ERROR_MESSAGE,      \
                                            (LPARAM) text)
-#define  SHOW_COMMAND(text)    SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
+#define  SHOW_COMMAND(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
                                            (WPARAM)_USER_SHOW_COMMAND,       \
                                            (LPARAM) text)
-#define  SHOW_THREAD(text)     SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
+#define  SHOW_THREAD(text)     SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
                                            (WPARAM)_USER_THREAD_MESSAGE,     \
                                            (LPARAM) text)
 
@@ -244,13 +244,13 @@
     BOOL CALLBACK  Main_Modules_dialog(  HWND hDlg,     UINT Msg, 
  		                       WPARAM wParam, LPARAM lParam) 
 {
-    static  HFONT  font ;        /* Шрифт */
- class RSS_Kernel *entry ;
-              int  elm ;         /* Идентификатор элемента диалога */
-              int  status ;
-              int  index ;
-             char  tmp[1024] ;
-              int  i ;
+      static  HFONT  font ;        /* Шрифт */
+ class Crowd_Kernel *entry ;
+                int  elm ;         /* Идентификатор элемента диалога */
+                int  status ;
+                int  index ;
+               char  tmp[1024] ;
+                int  i ;
 
 /*------------------------------------------------- Большая разводка */
 
@@ -293,7 +293,7 @@
        if(   elm==IDC_MODULES_LIST &&
           status==LBN_DBLCLK         ) {
  
-              entry=(class RSS_Kernel *)LB_GET_ITEM(elm)  ;
+              entry=(class Crowd_Kernel *)LB_GET_ITEM(elm)  ;
               entry->vExecuteCmd("&?") ;
 
                                            return(FALSE) ;

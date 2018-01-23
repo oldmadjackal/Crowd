@@ -12,9 +12,9 @@
 
 #include "..\Matrix\Matrix.h"
 
-//#include "..\RSS_Feature\RSS_Feature.h"
-//#include "..\RSS_Object\RSS_Object.h"
-#include "..\RSS_Kernel\RSS_Kernel.h"
+#include "..\Crowd_Feature\Crowd_Feature.h"
+#include "..\Crowd_Object\Crowd_Object.h"
+#include "..\Crowd_Kernel\Crowd_Kernel.h"
 
 #include "CrowdRoot.h"
 #include "CrowdRoot_show.h"
@@ -24,9 +24,9 @@
 
 /*--------------------------------------------- Системные переменные */
 
-#define  SEND_ERROR(text)      SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
-                                         (WPARAM)_USER_ERROR_MESSAGE,        \
-                                         (LPARAM) text)
+#define  SEND_ERROR(text)      SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
+                                           (WPARAM)_USER_ERROR_MESSAGE,        \
+                                           (LPARAM) text)
 
 /*--------------------------------------------- Контексты Рендеринга */
 
@@ -710,15 +710,15 @@
 
    int  CrowdRoot_lookat_point(WndContext *context) 
 {
-  RSS_Point  target ;
-     double  x ;
-     double  y ;
-     double  z ;
-     double  dy ;
-     double  ds ;
-       char  name[256] ;
-       char *end ;
-        int  i ;
+  Crowd_Point  target ;
+       double  x ;
+       double  y ;
+       double  z ;
+       double  dy ;
+       double  ds ;
+         char  name[256] ;
+         char *end ;
+          int  i ;
 
 #define  _RAD_TO_GRD  57.296  
 
@@ -732,8 +732,8 @@
 
    if(*end!=0) {
 
-#define   OBJECTS       RSS_Kernel::kernel->kernel_objects 
-#define   OBJECTS_CNT   RSS_Kernel::kernel->kernel_objects_cnt 
+#define   OBJECTS       Crowd_Kernel::kernel->kernel_objects 
+#define   OBJECTS_CNT   Crowd_Kernel::kernel->kernel_objects_cnt 
 
                     memset(name, 0, sizeof(name)) ;
                    strncpy(name, context->AtObject, sizeof(name)-1) ;

@@ -12,16 +12,16 @@
 
 #include "Controls.h"
 
-//#include "..\RSS_Feature\RSS_Feature.h"
-//#include "..\RSS_Object\RSS_Object.h"
-#include "..\RSS_Kernel\RSS_Kernel.h"
+#include "..\Crowd_Feature\Crowd_Feature.h"
+#include "..\Crowd_Object\Crowd_Object.h"
+#include "..\Crowd_Kernel\Crowd_Kernel.h"
 
 #include "CrowdRoot.h"
 
 #pragma warning(disable : 4996)
 
 
-#define  SEND_ERROR(text)    SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
+#define  SEND_ERROR(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
                                          (WPARAM)_USER_ERROR_MESSAGE,      \
                                          (LPARAM) text) ;
 
@@ -35,15 +35,15 @@
     BOOL CALLBACK  Main_Help_dialog(  HWND hDlg,     UINT Msg, 
  		                    WPARAM wParam, LPARAM lParam) 
 {
-  RSS_Module_Main  Module ;
-              int  elm ;         /* Идентификатор элемента диалога */
-              int  status ;
-              int  index ;
-              int  insert_flag ;
-             char *help ;
-             char  text[512] ;
-             char *end ;
-              int  i ;
+  Crowd_Module_Main  Module ;
+                int  elm ;         /* Идентификатор элемента диалога */
+                int  status ;
+                int  index ;
+                int  insert_flag ;
+               char *help ;
+               char  text[512] ;
+               char *end ;
+                int  i ;
 
 /*------------------------------------------------- Большая разводка */
 
@@ -153,8 +153,8 @@
           int  status ;
           int  i ;
 
-#define   OBJECTS       RSS_Kernel::kernel->kernel_objects 
-#define   OBJECTS_CNT   RSS_Kernel::kernel->kernel_objects_cnt 
+#define   OBJECTS       Crowd_Kernel::kernel->kernel_objects 
+#define   OBJECTS_CNT   Crowd_Kernel::kernel->kernel_objects_cnt 
      
 /*------------------------------------------------- Большая разводка */
 
@@ -164,8 +164,8 @@
 
     case WM_INITDIALOG: {
 /*- - - - - - - - - - - - - - - - - - - -  Перезапись активного окна */
-                    hWnd_active_prv=RSS_Kernel::active_wnd ;
-             RSS_Kernel::active_wnd= hDlg ;
+                    hWnd_active_prv=Crowd_Kernel::active_wnd ;
+           Crowd_Kernel::active_wnd= hDlg ;
 /*- - - - - - - - - - - - - - - - - - - - -  Инициализация элементов */
                  LB_CLEAR(IDC_OBJECTS_LIST) ;
 
@@ -220,7 +220,7 @@
 
     case WM_CLOSE:      {
                     
-                          RSS_Kernel::active_wnd=hWnd_active_prv ;  /* Восстановление активного окна */
+                        Crowd_Kernel::active_wnd=hWnd_active_prv ;  /* Восстановление активного окна */
 
                             EndDialog(hDlg, 0) ;
   			       return(FALSE) ;

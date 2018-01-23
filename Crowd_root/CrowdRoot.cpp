@@ -11,9 +11,9 @@
 #include <direct.h>
 #include <time.h>
 
-//#include "..\RSS_Feature\RSS_Feature.h"
-//#include "..\RSS_Object\RSS_Object.h"
-#include "..\RSS_Kernel\RSS_Kernel.h"
+#include "..\Crowd_Feature\Crowd_Feature.h"
+#include "..\Crowd_Object\Crowd_Object.h"
+#include "..\Crowd_Kernel\Crowd_Kernel.h"
 
 #include "..\Matrix\Matrix.h"
 #include "..\UD_tools\UserDlg.h"
@@ -32,17 +32,17 @@
 
 /*--------------------------------------------- Системные переменные */
 
-        RSS_Module_Main  Kernel ;    /* Системное ядро */
+        Crowd_Module_Main  Kernel ;    /* Системное ядро */
 
-#define  SEND_ERROR(text)      SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
-                                         (WPARAM)_USER_ERROR_MESSAGE,        \
-                                         (LPARAM) text)
-#define  SHOW_COMMAND(text)    SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
-                                         (WPARAM)_USER_SHOW_COMMAND,         \
-                                         (LPARAM) text)
-#define  SEND_CHECK(text)      SendMessage(RSS_Kernel::kernel_wnd, WM_USER,  \
-                                         (WPARAM)_USER_CHECK_MESSAGE,        \
-                                         (LPARAM) text)
+#define  SEND_ERROR(text)      SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
+                                           (WPARAM)_USER_ERROR_MESSAGE,        \
+                                           (LPARAM) text)
+#define  SHOW_COMMAND(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
+                                           (WPARAM)_USER_SHOW_COMMAND,         \
+                                           (LPARAM) text)
+#define  SEND_CHECK(text)      SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
+                                           (WPARAM)_USER_CHECK_MESSAGE,        \
+                                           (LPARAM) text)
 
 /*-------------------------------------- Обработка элементов диалога */
 
@@ -127,19 +127,19 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
                       CrowdRoot_show_init() ;                       /* Инициализация системы отображения */
 
-      RSS_Kernel::display.GetList        =CrowdRoot_show_getlist ;  /* Пропись функций интерфейса */
-      RSS_Kernel::display.ReleaseList    =CrowdRoot_show_releaselist ;        
-      RSS_Kernel::display.SetFirstContext=CrowdRoot_first_context ;
-      RSS_Kernel::display.SetNextContext =CrowdRoot_next_context ;
-      RSS_Kernel::display.ShowContext    =CrowdRoot_show_context ;
-      RSS_Kernel::display.GetContextPar  =CrowdRoot_get_context ;
+    Crowd_Kernel::display.GetList        =CrowdRoot_show_getlist ;  /* Пропись функций интерфейса */
+    Crowd_Kernel::display.ReleaseList    =CrowdRoot_show_releaselist ;        
+    Crowd_Kernel::display.SetFirstContext=CrowdRoot_first_context ;
+    Crowd_Kernel::display.SetNextContext =CrowdRoot_next_context ;
+    Crowd_Kernel::display.ShowContext    =CrowdRoot_show_context ;
+    Crowd_Kernel::display.GetContextPar  =CrowdRoot_get_context ;
 
 /*---------------------------------------------------- Инициализация */
 
                       hInst=hInstance ;
 
-      RSS_Kernel::show_time_step=0.1 ;
-      RSS_Kernel::calc_time_step=0.1 ;
+      Crowd_Kernel::show_time_step=0.1 ;
+      Crowd_Kernel::calc_time_step=0.1 ;
 
 /*------------------------------- Регистрация класса первичного окна */
 
@@ -500,7 +500,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 /*- - - - - - - - - - - - -  Исполнение в контексте потока сообщений */
         if(wParam==_USER_CHANGE_CONTEXT) {
 
-                  ((RSS_Transit *)lParam)->vExecute() ;
+                  ((Crowd_Transit *)lParam)->vExecute() ;
 
                                             return(FALSE) ;
                                          }
@@ -804,8 +804,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
              int  arrow_command ;
             char  o_name[128] ;          /* Имя объекта */ 
             char *u_name ;               /* Имя компонента */
-      RSS_Object *object ;
-      RSS_Object *unit ;
+    Crowd_Object *object ;
+    Crowd_Object *unit ;
              int  postfix_flag ;         /* Флаг обработки постфиксной команды */
             HWND  hDlg ;
              int  status ;
@@ -834,14 +834,14 @@ typedef  struct {
 
   static  CrowdRoot_commands *commands_pool[100] ;   /* Список наборов команд */
 
-#define   OBJECTS       RSS_Kernel::kernel->kernel_objects 
-#define   OBJECTS_CNT   RSS_Kernel::kernel->kernel_objects_cnt 
+#define   OBJECTS       Crowd_Kernel::kernel->kernel_objects 
+#define   OBJECTS_CNT   Crowd_Kernel::kernel->kernel_objects_cnt 
 
 /*------------------------------------------------------- Подготовка */
 
                         hDlg=hDialog ;
 
-                      RSS_Kernel::kernel->stop=0 ;
+                      Crowd_Kernel::kernel->stop=0 ;
 
                            arrow_command=0 ;
 
@@ -1509,83 +1509,83 @@ typedef  struct {
 /*								    */
 /*                            Список команд                         */
 
-  struct RSS_Module_Main_instr  RSS_Module_Main_InstrList[]={
+  struct Crowd_Module_Main_instr  Crowd_Module_Main_InstrList[]={
 
  { "help",      "?",     "# HELP   - список доступных команд", 
                           NULL,
-                         &RSS_Module_Main::cHelp   },
+                         &Crowd_Module_Main::cHelp   },
  { "show",      "s",     "#SHOW   - отобразить рабочее пространство", 
                           NULL,
-                        &RSS_Module_Main::cShowScene  },
+                        &Crowd_Module_Main::cShowScene  },
  { "kill",      "k",     "# KILL - удалить объект",
                          " KILL[/Q] <Имя>\n"
                          "   Удаляет именованный обьект"
                          " KILL[/Q] <Префикс>%\n"
                          "   Удаляет все обьекты, имя которых начинается с заданного фрагмента",
-                         &RSS_Module_Main::cKill },
+                         &Crowd_Module_Main::cKill },
  { "all",       "all",   "# ALL - выдать список объектов",
                           NULL,
-                         &RSS_Module_Main::cAll },
+                         &Crowd_Module_Main::cAll },
  { "lookinfo",  "li",    "# LOOKINFO - показать параметры камеры ",
                           NULL,
-                         &RSS_Module_Main::cLookInfo },
+                         &Crowd_Module_Main::cLookInfo },
  { "eye",       "eye",   "# EYE - задать точку положения глаза",
                          " EYE    <X> <Y> <Z>\n"
                          " EYE/X  <X>\n"
                          " EYE/+X <X>\n"
                          " EYE>   <Шаг>\n"
                          " EYE>>  <Шаг>\n",
-                         &RSS_Module_Main::cLookPoint },
+                         &Crowd_Module_Main::cLookPoint },
  { "look",      "look",  "# LOOK - задать направление взгляда",
                          " LOOK    <A> <E> <R>\n"
                          " LOOK/A  <A>\n"
                          " LOOK/+A <A>\n"
                          " LOOK>   <Шаг>\n"
                          " LOOK>>  <Шаг>\n",
-                         &RSS_Module_Main::cLookDirection },
+                         &Crowd_Module_Main::cLookDirection },
  { "lookat",    "la",    "# LOOKAT - задать точку(объект) наблюдения",
                          " LOOKAT <Имя объекта>\n",
-                         &RSS_Module_Main::cLookAt },
+                         &Crowd_Module_Main::cLookAt },
  { "zoom",      "z",     "# ZOOM - управление полем зрения камеры",
                          " ZOOM <Ширина поля зрения>\n"
                          " ZOOM+\n"
                          " ZOOM-\n",
-                         &RSS_Module_Main::cLookZoom },
+                         &Crowd_Module_Main::cLookZoom },
  { "read",      "read",  "# READ - считать данные из файла",
                          " READ [<Файл>]  \n",
-                         &RSS_Module_Main::cRead },
+                         &Crowd_Module_Main::cRead },
  { "write",     "write", "# WRITE - записать данные в файл",
                          " WRITE [<Файл>]  \n"
                          " WRITE/О [<Файл>] <Объект1> <Объект2>...\n",
-                         &RSS_Module_Main::cWrite },
+                         &Crowd_Module_Main::cWrite },
  { "threads",   "th",    "# THREADS - монитор рабочих потоков", 
                           NULL,
-                         &RSS_Module_Main::cThreads   },
+                         &Crowd_Module_Main::cThreads   },
  { "stop",      "stop",  "# STOP - остановить рабочий поток",
                           NULL,
-                         &RSS_Module_Main::cStop   },
+                         &Crowd_Module_Main::cStop   },
  { "next",      "next",  "# NEXT - выполнять рабочий поток в пошаговом режиме",
                           NULL,
-                         &RSS_Module_Main::cNext   },
+                         &Crowd_Module_Main::cNext   },
  { "resume",    "resume","# RESUME - выполнять рабочий поток в непрерывном режиме",
                           NULL,
-                         &RSS_Module_Main::cResume   },
+                         &Crowd_Module_Main::cResume   },
  { "modules",   "mod",   "# MODULES - список подключенных модулей", 
                           NULL,
-                         &RSS_Module_Main::cModules   },
+                         &Crowd_Module_Main::cModules   },
  { "memory",    "mem",   "# MEMORY - управление памятью", 
                          " MEMORY ON    -  включение регистрации памяти \n"
                          " MEMORY LIST  -  сброс дампа памяти \n",
-                         &RSS_Module_Main::cMemory   },
+                         &Crowd_Module_Main::cMemory   },
  { "srand",     "srand", "# SRAND - управление генератором случайных последовательностей", 
                          " SRAND <Число> -  задание старт-точки генератора, Число>1 \n"
                          " SRAND AUTO    -  перевод старт-точки в автоматический режим \n",
-                         &RSS_Module_Main::cSrand    },
+                         &Crowd_Module_Main::cSrand    },
  { "time",      "time",  "# TIME - задание квантов времени процессов моделирования",
                          " TIME <Число> -  задание единого кванта времени для рассчетов и отображения, в секундах\n"
                          " TIME/C <Число> -  задание кванта времени рассчетов, в секундах\n"
                          " TIME/S <Число> -  задание кванта времени отображения, в секундах\n",
-                         &RSS_Module_Main::cTime    },
+                         &Crowd_Module_Main::cTime    },
  {  NULL }
                                                             } ;
 
@@ -1593,19 +1593,19 @@ typedef  struct {
 /*								    */
 /*		     Общие члены класса             		    */
 
-    struct RSS_Module_Main_instr *RSS_Module_Main::mInstrList ;
+    struct Crowd_Module_Main_instr *Crowd_Module_Main::mInstrList ;
 
 /********************************************************************/
 /*								    */
 /*		       Конструктор класса			    */
 
-     RSS_Module_Main::RSS_Module_Main(void)
+     Crowd_Module_Main::Crowd_Module_Main(void)
 
 {
 	   keyword="CrowdStand" ;
     identification="Module_Main" ;
 
-        mInstrList=RSS_Module_Main_InstrList ;
+        mInstrList=Crowd_Module_Main_InstrList ;
 }
 
 
@@ -1613,7 +1613,7 @@ typedef  struct {
 /*								    */
 /*		        Деструктор класса			    */
 
-    RSS_Module_Main::~RSS_Module_Main(void)
+    Crowd_Module_Main::~Crowd_Module_Main(void)
 
 {
 }
@@ -1623,7 +1623,7 @@ typedef  struct {
 /*								    */
 /*		        Выполнить команду       		    */
 
-  int  RSS_Module_Main::vExecuteCmd(const char *cmd)
+  int  Crowd_Module_Main::vExecuteCmd(const char *cmd)
 
 {
          char  command[1024] ;
@@ -1674,7 +1674,7 @@ typedef  struct {
 /*								    */
 /*		        Получить параметр       		    */
 
-     int  RSS_Module_Main::vGetParameter(char *name, char *value)
+     int  Crowd_Module_Main::vGetParameter(char *name, char *value)
 
 {
    char  text[128] ;
@@ -1697,7 +1697,7 @@ typedef  struct {
 /*								    */
 /*                   Выполнить целевой функционал                   */
 
-    void  RSS_Module_Main::vProcess(void)
+    void  Crowd_Module_Main::vProcess(void)
 
 {
    int  i ;
@@ -1717,7 +1717,7 @@ typedef  struct {
 /*								    */
 /*                    Отобразить связанные данные                   */
 
-    void  RSS_Module_Main::vShow(char *layer)
+    void  Crowd_Module_Main::vShow(char *layer)
 
 {
      SendMessage(hDialog, WM_USER, _USER_SHOW, (LPARAM)layer) ;
@@ -1728,7 +1728,7 @@ typedef  struct {
 /*								    */
 /*		        Записать данные в строку		    */
 
-    void  RSS_Module_Main::vWriteSave(std::string *text)
+    void  Crowd_Module_Main::vWriteSave(std::string *text)
 
 {
   std::string  buff ;
@@ -1762,7 +1762,7 @@ typedef  struct {
 /*								    */
 /*		        Считать данные из строки		    */
 
-    void  RSS_Module_Main::vReadSave(std::string *data)
+    void  Crowd_Module_Main::vReadSave(std::string *data)
 
 {
         char *buff ;
@@ -1828,7 +1828,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции HELP                    */
 
-  int  RSS_Module_Main::cHelp(char *cmd)
+  int  Crowd_Module_Main::cHelp(char *cmd)
 
 { 
     DialogBoxIndirect(GetModuleHandle(NULL),
@@ -1843,7 +1843,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции SHOW                    */
 
-  int  RSS_Module_Main::cShowScene(char *cmd)
+  int  Crowd_Module_Main::cShowScene(char *cmd)
 
 {
          this->vShow(NULL) ;
@@ -1858,7 +1858,7 @@ typedef  struct {
 /*								    */
 /*      KILL <Имя>                                                  */
 
-  int  RSS_Module_Main::cKill(char *cmd)
+  int  Crowd_Module_Main::cKill(char *cmd)
 
 {
    int   quiet_flag ;      /* Флаг режима "молчания" */
@@ -1978,7 +1978,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции All                     */
 
-  int  RSS_Module_Main::cAll(char *cmd)
+  int  Crowd_Module_Main::cAll(char *cmd)
 
 {
 /*-------------------------------------- Дешифровка командной строки */
@@ -2005,7 +2005,7 @@ typedef  struct {
 /*         EYE>   <Код стрелочки> <Шаг>                             */
 /*         EYE>>  <Код стрелочки> <Шаг>                             */
 
-  int  RSS_Module_Main::cLookPoint(char *cmd)
+  int  Crowd_Module_Main::cLookPoint(char *cmd)
 
 {
 #define  _COORD_MAX   3
@@ -2213,7 +2213,7 @@ typedef  struct {
 /*        LOOK>   <Код стрелочки> <Шаг>                             */
 /*        LOOK>>  <Код стрелочки> <Шаг>                             */
 
-  int  RSS_Module_Main::cLookDirection(char *cmd) 
+  int  Crowd_Module_Main::cLookDirection(char *cmd) 
 
 {
 #define  _COORD_MAX   3
@@ -2399,7 +2399,7 @@ typedef  struct {
 /*        ZOOM+                                                     */
 /*        ZOOM-                                                     */
 
-  int  RSS_Module_Main::cLookZoom(char *cmd) 
+  int  Crowd_Module_Main::cLookZoom(char *cmd) 
 
 {
               int   delta_flag ;        /* Флаг режима приращений */
@@ -2479,7 +2479,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции LOOKAT                  */
 
-  int  RSS_Module_Main::cLookAt(char *cmd) 
+  int  Crowd_Module_Main::cLookAt(char *cmd) 
 
 {
      int   quiet_flag ;        /* Флаг отображения изменений */
@@ -2515,7 +2515,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции LOOKINFO                */
 
-  int  RSS_Module_Main::cLookInfo(char *cmd) 
+  int  Crowd_Module_Main::cLookInfo(char *cmd) 
 
 {
         int   all_flag ;
@@ -2585,7 +2585,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции READ                    */
 
-  int  RSS_Module_Main::cRead(char *cmd)
+  int  Crowd_Module_Main::cRead(char *cmd)
 
 {
    OPENFILENAME  file_choice ;
@@ -2605,7 +2605,7 @@ typedef  struct {
 
 /*------------------------------------------------- Разборка команды */
 
-            sprintf(text, "RSS_Module_Main::cRead.0 heap=%d", _heapchk()) ;
+            sprintf(text, "Crowd_Module_Main::cRead.0 heap=%d", _heapchk()) ;
              iDebug(text, NULL) ;
 
       strncpy(path, cmd, sizeof(path)-1) ;
@@ -2718,7 +2718,7 @@ typedef  struct {
 
 /*-------------------------------------------------------------------*/
 
-         sprintf(text, "RSS_Module_Main::cRead.E heap=%d", _heapchk()) ;
+         sprintf(text, "Crowd_Module_Main::cRead.E heap=%d", _heapchk()) ;
           iDebug(text, NULL) ;
 
    return(0) ;
@@ -2744,7 +2744,7 @@ typedef  struct {
 /*	WRITE [<Имя файла>]                                         */
 /*	WRITE/O [<Имя файла>] <Имя объекта 1> ... <Имя объекта N>   */
 
-  int  RSS_Module_Main::cWrite(char *cmd) 
+  int  Crowd_Module_Main::cWrite(char *cmd) 
 
 {
    OPENFILENAME  file_choice ;
@@ -2912,7 +2912,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции THREADS                 */
 
-  int  RSS_Module_Main::cThreads(char *cmd)
+  int  Crowd_Module_Main::cThreads(char *cmd)
 
 { 
       CrowdRoot_threads("SHOW", NULL) ;
@@ -2925,10 +2925,10 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции STOP                    */
 
-  int  RSS_Module_Main::cStop(char *cmd)
+  int  Crowd_Module_Main::cStop(char *cmd)
 
 { 
-      RSS_Kernel::kernel->stop=1 ;
+      Crowd_Kernel::kernel->stop=1 ;
 
    return(0) ;
 }
@@ -2938,10 +2938,10 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции NEXT                    */
 
-  int  RSS_Module_Main::cNext(char *cmd)
+  int  Crowd_Module_Main::cNext(char *cmd)
 
 { 
-      RSS_Kernel::kernel->next=_RSS_KERNEL_NEXT_STEP ;
+      Crowd_Kernel::kernel->next=_CROWD_KERNEL_NEXT_STEP ;
 
    return(0) ;
 }
@@ -2951,10 +2951,10 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции RESUME                  */
 
-  int  RSS_Module_Main::cResume(char *cmd)
+  int  Crowd_Module_Main::cResume(char *cmd)
 
 {
-      RSS_Kernel::kernel->next=0 ;
+      Crowd_Kernel::kernel->next=0 ;
 
    return(0) ;
 }
@@ -2964,7 +2964,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции MODULES                 */
 
-  int  RSS_Module_Main::cModules(char *cmd)
+  int  Crowd_Module_Main::cModules(char *cmd)
 
 { 
     CrowdRoot_modules("CREATE") ;
@@ -2977,7 +2977,7 @@ typedef  struct {
 /*								    */
 /*		      Реализация инструкции MEMORY                  */
 
-  int  RSS_Module_Main::cMemory(char *cmd)
+  int  Crowd_Module_Main::cMemory(char *cmd)
 
 { 
 /*---------------------------------------- Запуск регистрации памяти */
@@ -3000,7 +3000,7 @@ typedef  struct {
 /*								    */
 /*                   Реализация инструкции SRAND                    */
 
-  int  RSS_Module_Main::cSrand(char *cmd)
+  int  Crowd_Module_Main::cSrand(char *cmd)
 
 { 
    char *end ;
@@ -3043,7 +3043,7 @@ typedef  struct {
 /*        TIME/C <Число>                                            */
 /*        TIME/S <Число>                                            */
 
-  int  RSS_Module_Main::cTime(char *cmd) 
+  int  Crowd_Module_Main::cTime(char *cmd) 
 
 {
 #define   _PARS_MAX  10 
@@ -3120,7 +3120,7 @@ typedef  struct {
 /*								    */
 /*                    Отображение данных                            */
 
-    void  RSS_Module_Main::ShowExecute(char *layer)
+    void  Crowd_Module_Main::ShowExecute(char *layer)
 
 {
    int  status ;
@@ -3160,13 +3160,13 @@ typedef  struct {
 /*								    */
 /*                   Отладочная печать в файла                      */
 
-   void  RSS_Module_Main::iDebug(char *text, char *path,  int  condition)
+   void  Crowd_Module_Main::iDebug(char *text, char *path,  int  condition)
 {
     if(condition)  iDebug(text, path) ;
 }
 
 
-   void  RSS_Module_Main::iDebug(char *text, char *path)
+   void  Crowd_Module_Main::iDebug(char *text, char *path)
 {
    static int  init_flag ;
          FILE *file ;         
