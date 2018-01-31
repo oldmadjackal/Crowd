@@ -107,7 +107,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 /*---------------------------------------- Подгрузка рабочих модулей */
 
-	    Kernel.keyword="CrowdStand" ;
+	    Kernel.keyword="Crowd" ;
 
 	    Kernel.SetKernel(NULL, hInstance) ;
   	    Kernel.Load     ("") ;
@@ -1345,7 +1345,7 @@ typedef  struct {
     else if(!memicmp(buff, "#remark ", 
                     strlen("#remark "))) {
 
-            MessageBox(NULL, buff+strlen("#remark "), "Crowd Stand",
+            MessageBox(NULL, buff+strlen("#remark "), "Crowd",
                                MB_ICONINFORMATION | MB_TASKMODAL) ;
                                          }
 /*----------------------------------------- Команда - Вложенный файл */
@@ -1602,7 +1602,7 @@ typedef  struct {
      Crowd_Module_Main::Crowd_Module_Main(void)
 
 {
-	   keyword="CrowdStand" ;
+	   keyword="Crowd" ;
     identification="Module_Main" ;
 
         mInstrList=Crowd_Module_Main_InstrList ;

@@ -120,6 +120,12 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
 
                                      } ; 
 
+/*------------------------------------------------ Описание сообытия */
+
+   struct Crowd_Event {
+                         Crowd_Object *source ;    /* Источник */
+                         Crowd_Object *object ;    /* Объект */
+                      }  ;
 /*------------------------------ Описание класса программного модуля */
 
   class CROWD_KERNEL_API Crowd_Kernel {
