@@ -1,0 +1,158 @@
+/********************************************************************/
+/*								    */
+/*		МОДУЛЬ УПРАВЛЕНИЯ ОТОБРАЖЕНИЕМ ОБЪЕКТОВ	            */
+/*								    */
+/********************************************************************/
+
+#ifdef F_SHOW_EXPORTS
+#define F_SHOW_API __declspec(dllexport)
+#else
+#define F_SHOW_API __declspec(dllimport)
+#endif
+
+
+/*---------------------------------------------- Параметры генерации */
+
+/*----------------------- Описание класса управления объектом "Тело" */
+
+  class F_SHOW_API Crowd_Module_Show : public Crowd_Kernel {
+
+    public:
+
+     static
+      struct Crowd_Module_Show_instr *mInstrList ;          /* Список команд */
+
+    public:
+     virtual           int  vGetParameter (char *, char *) ;  /* Получить параметр */
+     virtual          void  vStart        (void) ;            /* Стартовая разводка */
+     virtual Crowd_Feature *vCreateFeature(Crowd_Object *,    /* Создать свойство */
+                                           Crowd_Feature *) ;
+     virtual          void  vShow         (char *) ;          /* Отобразить связанные данные */
+     virtual           int  vExecuteCmd   (const char *) ;    /* Выполнить команду */
+     virtual          void  vWriteSave    (std::string *) ;   /* Записать данные в строку */
+
+    public:
+                       int  cHelp         (char *) ;          /* Инструкция Help */ 
+                       int  cColor        (char *) ;          /* Инструкция Color */
+                       int  cVisible      (char *) ;          /* Инструкция Visible */
+
+                       int  iShowScene    (void) ;            /* Отображение сцены */
+
+                             Crowd_Module_Show() ;               /* Конструктор */
+	                    ~Crowd_Module_Show() ;               /* Деструктор */
+                                                       } ;
+
+/*-------------------------------------------- Инструкции управления */
+
+ struct Crowd_Module_Show_instr {
+
+           char                   *name_full ;           /* Полное имя команды */
+           char                   *name_shrt ;           /* Короткое имя команды */
+           char                   *help_row ;            /* HELP - строка */
+           char                   *help_full ;           /* HELP - полный */
+            int (Crowd_Module_Show::*process)(char *) ;  /* Процедура выполнения команды */
+                                }  ;
+
+/*---------------------------------------------- Компоненты описания */
+
+ typedef struct {                                           /* Описание точки */
+                    double  x ;                              /* X - значение */
+                      char *x_formula ;                      /* X - рассчетное выражение */
+                      void *x_calculate ;                    /* X - контекст вычислителя */
+
+                    double  y ;                              /* Y - значение */
+                      char *y_formula ;                      /* Y - рассчетное выражение */
+                      void *y_calculate ;                    /* Y - контекст вычислителя */
+
+                    double  z ;                              /* Z - значение */
+                      char *z_formula ;                      /* Z - рассчетное выражение */
+                      void *z_calculate ;                    /* Z - контекст вычислителя */
+                }  Crowd_Feature_Show_Vertex ;
+
+#define  _VERTEX_PER_FACET_MAX   32
+
+ typedef struct {                                           /* Описание грани */
+                    int  vertexes[_VERTEX_PER_FACET_MAX] ;
+                    int  vertexes_cnt ;
+                }  Crowd_Feature_Show_Facet ;
+
+ typedef struct {                                            /* Описание тела */
+                                 char  name[128] ;              /* Название */
+               struct Crowd_Parameter *extrn_pars ;             /* Ссылак на параметры */
+
+                                  int  Visible ;                /* Видимость */
+                             COLORREF  Color ;                  /* Цвет */
+                           
+            Crowd_Feature_Show_Vertex *Vertexes ;               /* Список вершин */
+                                  int  Vertexes_cnt ; 
+             Crowd_Feature_Show_Facet *Facets ;                 /* Список вершин */
+                                  int  Facets_cnt ;
+
+                             double  x_base ;                 /* Координаты базовой точки */
+                             double  y_base ;
+                             double  z_base  ;
+                             double  x_base_s ;
+                             double  y_base_s ;
+                             double  z_base_s ;
+
+                             double  a_azim ;                 /* Углы ориентации */
+                             double  a_elev ;
+                             double  a_roll  ;
+                             double  a_azim_s ;
+                             double  a_elev_s ;
+                             double  a_roll_s ;
+
+                             double  Matrix[4][4] ;           /* Матрица положения звена */
+                                int  Matrix_flag ;            /* Флаг использования... */
+      
+                                int  list_idx ;               /* Индекс дисплейного списка */
+                }  Crowd_Feature_Show_Body ;
+
+/*----------------------------------- Описание класса свойства "Вид" */
+
+  class F_SHOW_API Crowd_Feature_Show : public Crowd_Feature {
+
+    public:       
+                                int  Visible ;                /* Видимость */
+                           COLORREF  Color ;                  /* Цвет */
+
+            Crowd_Feature_Show_Body *Bodies ;                 /* Список тел */
+                                int  Bodies_cnt ;
+
+             struct Crowd_Parameter *Pars_work ;
+
+    public:
+            virtual void  vReadSave     (char *, std::string *,        /* Считать данные из строки */
+                                                        char * ) ;
+            virtual void  vGetInfo      (std::string *) ;              /* Выдать информацию о свойстве */
+            virtual  int  vParameter    (char *, char *, char *) ;     /* Работа с параметрами */  
+            virtual void  vBodyDelete   (char *) ;                     /* Удалить тело */
+            virtual void  vBodyBasePoint(char *,                       /* Задание базовой точки тела */
+                                         double, double, double) ;
+            virtual void  vBodyAngles   (char *,                       /* Задание ориентации тела */
+                                         double, double, double) ;
+            virtual void  vBodyMatrix   (char *, double[4][4]) ;       /* Задание матрицы положения звена */
+            virtual void  vBodyShifts   (char *,                       /* Задание смещения положения и  */
+                                          double, double, double,      /*    ориентации тела            */
+                                          double, double, double ) ;
+            virtual void  vBodyPars     (char *,                       /* Задание списка параметров */
+                                             struct Crowd_Parameter *) ;
+
+                    void  Show          (void) ;                       /* Отобразить объект */
+
+                    void  iCalcNormal   (Crowd_Feature_Show_Vertex *,  /* Вычислить нормаль к плоскости */
+                                         Crowd_Feature_Show_Vertex *,   
+                                         Crowd_Feature_Show_Vertex *,   
+                                         Crowd_Feature_Show_Vertex * ) ;
+            Crowd_Kernel *iGetCalculator(void) ;                       /* Определение нужного вычислителя */ 
+
+	                  Crowd_Feature_Show() ;                       /* Конструктор */
+	                 ~Crowd_Feature_Show() ;                       /* Деструктор */
+                                                         } ;
+
+/*--------------------------------------------- Диалоговые процедуры */
+
+/* Файл  F_Show.cpp */
+
+/* Файл  F_Show_dialog.cpp */
+  BOOL CALLBACK  Feature_Show_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;
