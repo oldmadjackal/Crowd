@@ -19,7 +19,7 @@
 #include "..\Crowd_Object\Crowd_Object.h"
 #include "..\Crowd_Kernel\Crowd_Kernel.h"
 
-#include "..\DCL\dcl.h"
+#include "..\DCL_kernel\dcl.h"
 
 #include "C_Dcl.h"
 
@@ -94,7 +94,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 {
 	   keyword="Crowd" ;
-    identification="DCL_calculator" ;
+    identification="DCL_processor" ;
 }
 
 
@@ -119,7 +119,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
     if(!stricmp(name, "$$MODULE_NAME")) {
 
-         sprintf(value, "%-20.20s -  Стандартный вычислитель выражений", identification) ;
+         sprintf(value, "%-20.20s -  Процессор сценариев", identification) ;
                                         }
 /*-------------------------------------------------------------------*/
 
@@ -167,8 +167,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
   int  Crowd_Calc_Dcl::vCalculate(            char  *program, 
                                               char  *program_type, 
-                                      Crowd_Object  *object,
-                                struct Crowd_Event  *event,
                             struct Crowd_Parameter  *const_list,
                             struct Crowd_Parameter  *var_list,
                                             double  *result,

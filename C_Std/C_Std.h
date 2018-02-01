@@ -1,13 +1,13 @@
 /********************************************************************/
 /*								    */
-/*                   МОДУЛЬ DCL-ВЫЧИСЛИТЕЛЯ        	            */
+/*		МОДУЛЬ СТАНДАРТНОГО ВЫЧИСЛИТЕЛЯ        	            */
 /*								    */
 /********************************************************************/
 
-#ifdef C_DCL_EXPORTS
-#define C_DCL_API __declspec(dllexport)
+#ifdef C_STD_EXPORTS
+#define C_STD_API __declspec(dllexport)
 #else
-#define C_DCL_API __declspec(dllimport)
+#define C_STD_API __declspec(dllimport)
 #endif
 
 
@@ -16,13 +16,15 @@
 /*----------------------------------------------- Описание контекста */
 
  typedef struct {  
-                    int  dummy ;
+                   struct L_module  module_decl ; 
+
+                               int  compiled ;
  
-                }  Crowd_Calc_Dcl_context ;
+                }  Crowd_Calc_Std_context ;
 
 /*------------------------- Описание класса стандартного вычислителя */
 
-  class C_DCL_API Crowd_Calc_Dcl : public Crowd_Kernel {
+  class C_STD_API Crowd_Calc_Std : public Crowd_Kernel {
 
     public:
      virtual         int  vCalculate   (char *, char *,         /* Вычислить выражение */                                       
@@ -39,14 +41,14 @@
                     void  iDebug       (char *, char *, int) ;  /* Отладочная печать в файл */ 
                     void  iDebug       (char *, char *) ;
 
-	                  Crowd_Calc_Dcl() ;                     /* Конструктор */
-	                 ~Crowd_Calc_Dcl() ;                     /* Деструктор */
+	                  Crowd_Calc_Std() ;                     /* Конструктор */
+	                 ~Crowd_Calc_Std() ;                     /* Деструктор */
                                                    } ;
 
 /*---------------------------------------------------- Прототипы п/п */
 
-  void  Crowd_Calc_Dcl_text_norm(char *) ; /* Нормализация строки выражения */
-  char *Crowd_Calc_Dcl_get_text (void) ;   /* Процедура построчной выдачи текста компилятору */
-  char *Crowd_Calc_Dcl_error    (int) ;    /* Выдача текста ошибки по коду */
-  char *Crowd_Calc_Dcl_warning  (int) ;    /* Выдача текста предупреждения по коду */
-  void  Crowd_Calc_Dcl_debug    (int) ;    /* Процедура отладки вычислителя */
+  void  Crowd_Calc_Std_text_norm(char *) ; /* Нормализация строки выражения */
+  char *Crowd_Calc_Std_get_text (void) ;   /* Процедура построчной выдачи текста компилятору */
+  char *Crowd_Calc_Std_error    (int) ;    /* Выдача текста ошибки по коду */
+  char *Crowd_Calc_Std_warning  (int) ;    /* Выдача текста предупреждения по коду */
+  void  Crowd_Calc_Std_debug    (int) ;    /* Процедура отладки вычислителя */
