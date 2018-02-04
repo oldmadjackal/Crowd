@@ -1,0 +1,15 @@
+#step 0.
+
+#file tests\keys.keys
+
+human cr man1 cube
+human cr man2 cube
+human cr woman1 cone
+
+view ring
+
+lookat woman1
+
+zoom-
+
+#remark Используйте стрелочки для управления положением камеры
