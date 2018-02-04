@@ -165,8 +165,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
              int ERPC_dcl_debug(void) ;
 
 
-  int  Crowd_Calc_Dcl::vCalculate(            char  *program, 
-                                              char  *program_type, 
+  int  Crowd_Calc_Dcl::vCalculate(            char  *program_type, 
+                                              char  *program, 
                             struct Crowd_Parameter  *const_list,
                             struct Crowd_Parameter  *var_list,
                                             double  *result,
@@ -191,14 +191,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 #define        _BUFF_SIZE   64000
 
-#ifdef REMARK
-
 /*---------------------------------------- Идентификация вычислителя */
 
    if(stricmp(program_type, "DCL"  ) &&
       stricmp(program_type, "CLEAR")   )  return(1) ;
 
    if(context_ptr==NULL)  return(0) ;
+
+#ifdef REMARK
 
 //                                   iDebug("ExpressionType:", NULL) ;
 //      if(expression_type!=NULL)    iDebug(expression_type, NULL) ;

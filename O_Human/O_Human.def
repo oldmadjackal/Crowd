@@ -1,0 +1,4 @@
+LIBRARY O_Human
+   EXPORTS
+         Identify   DATA
+	 GetEntry   DATA
