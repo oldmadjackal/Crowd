@@ -1048,6 +1048,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 }
 
 
+
+
+
 /********************************************************************/
 /*								    */
 /*		        Записать данные в строку		    */
@@ -1079,6 +1082,24 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      *text+="#END\n" ;
 
 /*-------------------------------------------------------------------*/
+}
+
+
+/********************************************************************/
+/*								    */
+/*      Отображение результата расчета изменения состояния          */
+
+     int  Crowd_Object_Human::vCalculateShow(void)
+{
+  int  i ;
+
+
+   for(i=0 ; i<this->Features_cnt ; i++)
+       this->Features[i]->vBodyBasePoint("Human.Body", this->x_base, 
+                                                       this->y_base, 
+                                                       this->z_base ) ;
+
+  return(0) ;
 }
 
 

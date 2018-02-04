@@ -24,6 +24,7 @@
     public:
                virtual void  vFree          (void) ;          /* Освободить ресурсы */
                virtual void  vWriteSave     (std::string *) ; /* Записать данные в строку */
+               virtual  int  vCalculateShow (void) ;          /* Отображение результата расчета изменения состояния */
 
 	                     Crowd_Object_Human() ;           /* Конструктор */
 	                    ~Crowd_Object_Human() ;           /* Деструктор */

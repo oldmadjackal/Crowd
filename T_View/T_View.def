@@ -1,0 +1,4 @@
+LIBRARY T_View
+   EXPORTS
+         Identify   DATA
+	 GetEntry   DATA
