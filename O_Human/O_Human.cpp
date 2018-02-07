@@ -682,13 +682,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                     "Base X % 7.3lf\r\n" 
                     "     Y % 7.3lf\r\n" 
                     "     Z % 7.3lf\r\n"
-                    "Ang. A % 7.3lf\r\n" 
-                    "     E % 7.3lf\r\n" 
-                    "     R % 7.3lf\r\n"
                     "\r\n",
                         object->Name, object->Type, 
-                        object->x_base, object->y_base, object->z_base,
-                        object->a_azim, object->a_elev, object->a_roll
+                        object->x_base, object->y_base, object->z_base
                     ) ;
 
            info=text ;
