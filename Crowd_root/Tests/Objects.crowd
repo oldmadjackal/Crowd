@@ -3,12 +3,36 @@
 #file tests\keys.keys
 
 human cr man1 cube
-human cr man2 cube
 human cr woman1 cone
+human cr boy2 cube
+human cr girl2 cone
+human cr boy3 cube
+human cr girl3 cone
+
+man1 color green
+girl3 color blue
+
+pair kind married
+pair kind parent
+pair kind friend
+
+pair color married green
+pair color parent blue
+
+pair link man1 woman1 married
+pair link woman1 boy2 parent
+pair link man1 boy2 parent
+pair link woman1 girl2 parent
+pair link man1 girl2 parent
+pair link boy2 boy3 friend
+pair link girl2 girl3 friend
+
+pair link boy2 girl3 friend
+pair color boy2 girl3 rgb 0:255:255
 
 view ring
 
-lookat woman1
+lookat 0 0 0 
 
 zoom-
 

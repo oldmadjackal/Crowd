@@ -50,8 +50,9 @@
                        int  cHelp         (char *) ;             /* Инструкция HELP */ 
                        int  cCreate       (char *) ;             /* Инструкция CREATE */ 
                        int  cInfo         (char *) ;             /* Инструкция INFO */ 
-                       int  cVisible      (char *) ;             /* Инструкция VISIBLE */
                        int  cBase         (char *) ;             /* Инструкция BASE */ 
+                       int  cColor        (char *) ;             /* Инструкция COLOR */
+                       int  cVisible      (char *) ;             /* Инструкция VISIBLE */
 
         Crowd_Object_Human *FindObject    (char *) ;             /* Поиск обьекта типа HUMAN по имени */
 

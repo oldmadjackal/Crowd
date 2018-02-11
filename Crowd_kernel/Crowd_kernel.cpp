@@ -432,6 +432,18 @@ typedef Crowd_Kernel *(*MODULE_PTR)(void);
 
 /********************************************************************/
 /*								    */
+/*		        Создать связь                     	    */
+
+    Crowd_Communication *Crowd_Kernel::vCreateCommunication(Crowd_Object        *object_m, 
+                                                            Crowd_Object        *object_s, 
+                                                            Crowd_Communication *link_ext )
+{
+   return(NULL) ;
+}
+
+
+/********************************************************************/
+/*								    */
 /*		        Выполнить команду       		    */
 
      int  Crowd_Kernel::vExecuteCmd(const char *command)

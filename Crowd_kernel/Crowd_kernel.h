@@ -208,35 +208,37 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
 	    virtual int   vKernelEvents (void) ;           /* Обработка событий */
 
    public:
-     virtual          void  vStart        (void) ;               /* Стартовая разводка */
-     virtual          void  vInit         (void) ;               /* Инициализация связей */
-     virtual          void  vReadSave     (std::string *) ;      /* Считать данные из строки */
-     virtual          void  vWriteSave    (std::string *) ;      /* Записать данные в строку */
-     virtual  Crowd_Object *vCreateObject (Crowd_Model_data *) ; /* Создать объект */
-     virtual Crowd_Feature *vCreateFeature(Crowd_Object *,       /* Создать свойство */
-                                           Crowd_Feature * ) ;
-     virtual           int  vExecuteCmd   (const char *) ;       /* Выполнить команду */
-     virtual           int  vExecuteCmd   (const char *,         /* Выполнить команду с выдачей результата по ссылке */
-                                            Crowd_IFace *) ;
-     virtual           int  vCalculate    (char *, char *,       /* Вычислить выражение */
-                                           struct Crowd_Parameter *,
-                                           struct Crowd_Parameter *,
-                                           double *, 
-                                           void **, char *) ;
-     virtual           int  vGetParameter (char *, char *) ;     /* Получить параметр */
-     virtual          void  vSetParameter (char *, char *) ;     /* Установить параметр */
-     virtual          void  vProcess      (void) ;               /* Выполнить целевой функционал */
-     virtual          void  vShow         (char *) ;             /* Отобразить связанные данные */
-     virtual          void  vChangeContext(void)  ;              /* Выполнить действие в контексте потока */
+     virtual                void  vStart              (void) ;               /* Стартовая разводка */
+     virtual                void  vInit               (void) ;               /* Инициализация связей */
+     virtual                void  vReadSave           (std::string *) ;      /* Считать данные из строки */
+     virtual                void  vWriteSave          (std::string *) ;      /* Записать данные в строку */
+     virtual        Crowd_Object *vCreateObject       (Crowd_Model_data *) ; /* Создать объект */
+     virtual       Crowd_Feature *vCreateFeature      (Crowd_Object *,       /* Создать свойство */
+                                                       Crowd_Feature * ) ;
+     virtual Crowd_Communication *vCreateCommunication(Crowd_Object *,           /* Создать связь */
+                                                       Crowd_Object *,
+                                                       Crowd_Communication *) ;
+     virtual                 int  vExecuteCmd         (const char *) ;       /* Выполнить команду */
+     virtual                 int  vExecuteCmd         (const char *,         /* Выполнить команду с выдачей результата по ссылке */
+                                                        Crowd_IFace *) ;
+     virtual                 int  vCalculate          (char *, char *,       /* Вычислить выражение */
+                                                        struct Crowd_Parameter *,
+                                                        struct Crowd_Parameter *,
+                                                        double *, void **, char *) ;
+     virtual                 int  vGetParameter       (char *, char *) ;     /* Получить параметр */
+     virtual                void  vSetParameter       (char *, char *) ;     /* Установить параметр */
+     virtual                void  vProcess            (void) ;               /* Выполнить целевой функционал */
+     virtual                void  vShow               (char *) ;             /* Отобразить связанные данные */
+     virtual                void  vChangeContext      (void)  ;              /* Выполнить действие в контексте потока */
 
-     virtual Crowd_Context *vAddData      (Crowd_Context ***) ;  /* Ввод контекста модуля в список контекстов */
-     virtual           int  vReadData     (Crowd_Context ***,    /* Считать данные контекста модуля из строки */
-                                           std::string * ) ;
-     virtual          void  vWriteData    (Crowd_Context *,      /* Записать данные контекста модуля в строку */
-                                           std::string * ) ;
-     virtual          void  vReleaseData  (Crowd_Context *) ;    /* Освободить ресурсы данных контекста модуля */
+     virtual       Crowd_Context *vAddData            (Crowd_Context ***) ;  /* Ввод контекста модуля в список контекстов */
+     virtual                 int  vReadData           (Crowd_Context ***,    /* Считать данные контекста модуля из строки */
+                                                       std::string * ) ;
+     virtual                void  vWriteData          (Crowd_Context *,      /* Записать данные контекста модуля в строку */
+                                                       std::string * ) ;
+     virtual                void  vReleaseData        (Crowd_Context *) ;    /* Освободить ресурсы данных контекста модуля */
 
-     virtual      double  vGetTime      (void) ;               /* Системное время */
+     virtual              double  vGetTime            (void) ;               /* Системное время */
 
     public:
 

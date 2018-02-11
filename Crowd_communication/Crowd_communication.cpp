@@ -39,6 +39,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      Crowd_Communication::Crowd_Communication()
 
 {
+    memset(Type, 0, sizeof(Type)) ;
+    memset(Kind, 0, sizeof(Kind)) ;
+
+      Color=RGB(0, 0, 0) ;
 }
 
 

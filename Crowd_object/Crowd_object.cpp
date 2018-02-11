@@ -86,6 +86,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      Parameters_cnt=  0 ;
        Features    =NULL ;
        Features_cnt=  0 ;
+ Communications    =NULL ;
+ Communications_cnt=  0 ;
 
        battle_state= 0 ; 
 
@@ -134,14 +136,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      x_base_stack    =x_base ;
      y_base_stack    =y_base ;
      z_base_stack    =z_base ;
-
-     a_azim_stack    =a_azim ;
-     a_elev_stack    =a_elev ;
-     a_roll_stack    =a_roll ;
-
-     x_velocity_stack=x_velocity ;
-     y_velocity_stack=y_velocity ;
-     z_velocity_stack=z_velocity ;
 }
 
 
@@ -151,14 +145,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      x_base    =x_base_stack ;
      y_base    =y_base_stack ;
      z_base    =z_base_stack ;
-
-     a_azim    =a_azim_stack ;
-     a_elev    =a_elev_stack ;
-     a_roll    =a_roll_stack ;
-
-     x_velocity=x_velocity_stack ;
-     y_velocity=y_velocity_stack ;
-     z_velocity=z_velocity_stack ;
 }
 
 
@@ -228,10 +214,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
         points->y=y_base ;
         points->z=z_base ;
 
-        points->azim=a_azim ;
-        points->elev=a_elev ;
-        points->roll=a_roll ;
-
     return(0) ;
 }
 
@@ -241,24 +223,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
         x_base=points->x ;
         y_base=points->y ;
         z_base=points->z ;
-
-        a_azim=points->azim ;
-        a_elev=points->elev ;
-        a_roll=points->roll ;
-}
-
-
-/********************************************************************/
-/*								    */
-/*                    Получение вектора скорости                    */
-
-    int  Crowd_Object::vGetVelocity(Crowd_Vector *velocity)
-{
-        velocity->x=x_velocity ;
-        velocity->y=y_velocity ;
-        velocity->z=z_velocity ;
-
-   return(0) ;
 }
 
 

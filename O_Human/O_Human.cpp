@@ -108,6 +108,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                    " BASE> <Имя>\n"
                    "   Задает клавиатурное управление базовой точкой объекта\n",
                    &Crowd_Module_Human::cBase },
+ { "color",   "c", "#COLOR   - установить цвет объекта", 
+                   " COLOR <имя> <название цвета>\n"
+                   "   Установить цвет объекта по названию: RED, GREEN, BLUE\n"
+                   " COLOR <имя> RGB <R-индекс>:<G-индекс>:<B-индекс>\n"
+                   "   Установить цвет объекта по RGB-компонентам\n",
+                   &Crowd_Module_Human::cColor      },
  { "visible", "v", "#VISIBLE - задание режима видимости объекта",
                    " VISIBLE <Имя> \n"
                    "   Изменить состояние видимости объекта на противоположное",
@@ -895,9 +901,104 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*		      Реализация инструкции VISISBLE                */
+/*                   Реализация инструкции Color                    */
+/*       COLOR  <Имя> <Название цвета>                              */
+/*       COLOR  <Имя> RGB <R-индекс>:<G-индекс>:<B-индекс>          */
+
+  int  Crowd_Module_Human::cColor(char *cmd)
+
+{ 
+#define   _PARS_MAX   4
+      char *pars[_PARS_MAX] ;
+      char *name ;
+  COLORREF  color ;
+       int  red, green, blue ;
+      char *end ;
+      char  text[1024] ;
+       int  i ;
+       int  j ;
+
+#define   OBJECTS       this->kernel->kernel_objects 
+#define   OBJECTS_CNT   this->kernel->kernel_objects_cnt 
+
+/*------------------------------------------------ Разбор параметров */        
+
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+                     name=pars[0] ;
+
+/*----------------------------------------------------- Разбор цвета */
+
+     if(pars[1]==NULL) {
+                         SEND_ERROR("Не задано имя объекта. \n"
+                                    "Например: COLOR <Имя_объекта> GREEN") ;
+                                        return(-1) ;
+                       } 
+
+              if(!stricmp(pars[1], "RED"  ))  color=RGB(127,   0,   0) ;
+         else if(!stricmp(pars[1], "GREEN"))  color=RGB(  0, 127,   0) ;
+         else if(!stricmp(pars[1], "BLUE" ))  color=RGB(  0,   0, 127) ;
+         else if(!stricmp(pars[1], "RGB"  )) {
+
+                 if(pars[2]!=NULL) {
+                                       green=0 ;
+                                        blue=0 ;
+                                         red=strtoul(pars[2], &end, 10) ;
+                         if(*end==':') green=strtoul(end+1  , &end, 10) ;
+                         if(*end==':')  blue=strtoul(end+1  , &end, 10) ;
+
+                                       color=RGB(red, green, blue) ;                                          
+                                   }
+                                             } 
+         else                                {
+                         SEND_ERROR("Неизвестное название цвета") ;
+                                        return(-1) ;
+                                             }
+/*------------------------------------------- Поиск объекта по имени */ 
+
+    if(name==NULL) {                                                /* Если имя не задано... */
+                      SEND_ERROR("Не задано имя объекта. \n"
+                                 "Например: COLOR <Имя_объекта> ...") ;
+                                     return(-1) ;
+                   }
+
+       for(i=0 ; i<OBJECTS_CNT ; i++)                               /* Ищем объект по имени */
+         if(!stricmp(OBJECTS[i]->Name, name))  break ;
+
+    if(i==OBJECTS_CNT) {                                            /* Если имя не найдено... */
+                           sprintf(text, "Объекта с именем '%s' "
+                                         "НЕ существует", name) ;
+                        SEND_ERROR(text) ;
+                            return(NULL) ;
+                       }
+/*---------------------------------- Подготовка отображения объектов */
+
+    for(j=0 ; j<OBJECTS[i]->Features_cnt ; j++)
+      if(!stricmp(OBJECTS[i]->Features[j]->Type, "Show"))  
+            ((Crowd_Feature_Show *)OBJECTS[i]->Features[j])->Color=color ;
+
+/*-------------------------------------------------------------------*/
+
+#undef    OBJECTS
+#undef    OBJECTS_CNT
+
+   return(0) ;
+}
+
+
+/********************************************************************/
 /*								    */
-/*        VISISBLE  <Имя>                                           */
+/*		      Реализация инструкции VISIBLE                 */
+/*								    */
+/*        VISIBLE  <Имя>                                            */
 
   int  Crowd_Module_Human::cVisible(char *cmd)
 
@@ -1008,10 +1109,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
       x_base=0 ;
       y_base=0 ;
       z_base=0 ;
-
-      a_azim=0 ;
-      a_elev=0 ;
-      a_roll=0 ;
 }
 
 
@@ -1089,11 +1186,20 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 {
   int  i ;
 
+/*------------------------------------------------ Отрисовка объекта */
 
    for(i=0 ; i<this->Features_cnt ; i++)
        this->Features[i]->vBodyBasePoint("Human.Body", this->x_base, 
                                                        this->y_base, 
                                                        this->z_base ) ;
+
+/*------------------------------------------------- Отрисовка связей */
+
+   for(i=0 ; i<this->Communications_cnt ; i++) {
+
+                                               }
+/*-------------------------------------------------------------------*/
+
 
   return(0) ;
 }

@@ -4,6 +4,7 @@
 #define  CROWD_OBJECT_H 
 
 #include "..\Crowd_Feature\Crowd_Feature.h"
+#include "..\Crowd_Communication\Crowd_Communication.h"
 
 #include <string>
 
@@ -108,47 +109,36 @@
   class CROWD_OBJECT_API Crowd_Object {
 
        public:
-                       char  Name[128] ;       /* Имя обьекта */
-                       char  Type[128] ;       /* Тип обьекта */
-                       char  Decl[1024] ;      /* Описание обьекта */
+                       char  Name[128] ;           /* Имя обьекта */
+                       char  Type[128] ;           /* Тип обьекта */
+                       char  Decl[1024] ;          /* Описание обьекта */
 
-                        int  battle_state ;    /* Род объекта в бою */
+                        int  battle_state ;        /* Род объекта в бою */
 #define                       _ACTIVE_STATE  1
 #define                        _SPAWN_STATE  2
 
-                     double  x_base ;          /* Координаты базовой точки */
+                     double  x_base ;              /* Координаты базовой точки */
                      double  y_base ;
                      double  z_base ;
                      double  x_base_stack ;
                      double  y_base_stack ;
                      double  z_base_stack ;
 
-                     double  a_azim ;          /* Углы ориентации */
-                     double  a_elev ;
-                     double  a_roll ;
-                     double  a_azim_stack ;
-                     double  a_elev_stack ;
-                     double  a_roll_stack ;
-
-                     double  x_velocity ;      /* Вектор скорости */
-                     double  y_velocity ;
-                     double  z_velocity ;
-                     double  x_velocity_stack ;
-                     double  y_velocity_stack ;
-                     double  z_velocity_stack ;
-
-     struct Crowd_Parameter  *Parameters ;     /* Список параметров */
+     struct Crowd_Parameter  *Parameters ;         /* Список параметров */
                         int   Parameters_cnt ;
 
-              Crowd_Feature **Features ;       /* Список свойств */
+              Crowd_Feature **Features ;           /* Список свойств */
                         int   Features_cnt ;
 
-   class Crowd_Objects_List   Units ;          /* Список объектов-составных частей */
+        Crowd_Communication **Communications ;     /* Список свойств */
+                        int   Communications_cnt ;
 
-              Crowd_Transit  *Context ;        /* Интерфейс передачи контекстов */
-        class  Crowd_Kernel  *Module ;         /* Программный модуль объекта */
+   class Crowd_Objects_List   Units ;              /* Список объектов-составных частей */
 
-                        int   ErrorEnable ;    /* Флаг выдачи сообщений об ошибках */
+              Crowd_Transit  *Context ;            /* Интерфейс передачи контекстов */
+        class  Crowd_Kernel  *Module ;             /* Программный модуль объекта */
+
+                        int   ErrorEnable ;        /* Флаг выдачи сообщений об ошибках */
 
        public:
 
@@ -169,7 +159,6 @@
 
    virtual                int  vGetPosition    (Crowd_Point *) ;      /* Работа с положением объекта */
    virtual               void  vSetPosition    (Crowd_Point *) ;
-   virtual                int  vGetVelocity    (Crowd_Vector *) ;     /* Получение вектора скорости */
 
    virtual                int  vSpecial        (char *, void *) ;     /* Специальные действия */
 

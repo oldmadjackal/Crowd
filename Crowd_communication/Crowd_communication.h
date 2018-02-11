@@ -16,8 +16,13 @@
     class CROWD_COMMUNICATION_API Crowd_Communication {
 
     public:
-                         char  Type[128] ;      /* Тип свойства */
-           class Crowd_Object *Object ;         /* Обьект принадлежности */ 
+                               char  Type[128] ;          /* Тип связи */
+                               char  Kind[64] ;           /* Вид связи */
+                 class Crowd_Object *Object_m ;           /* Обьект, основной */ 
+                 class Crowd_Object *Object_s ;           /* Обьект, связанный */ 
+
+                                int  Visible ;            /* Видимость */
+                           COLORREF  Color ;              /* Цвет */
 
     public:
                virtual void  vReadSave     (char *, std::string *,    /* Считать данные из строки */
