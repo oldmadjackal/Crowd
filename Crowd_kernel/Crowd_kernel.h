@@ -5,6 +5,7 @@
 
 #include "..\Crowd_Model\Crowd_Model.h"
 #include "..\Crowd_Feature\Crowd_Feature.h"
+#include "..\Crowd_Message\Crowd_Message.h"
 #include "..\Crowd_Object\Crowd_Object.h"
 
 #include <string>
@@ -148,6 +149,9 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
 
     static   Crowd_Object **kernel_objects ;          /* Список объектов */
     static            int   kernel_objects_cnt ;
+
+    static  Crowd_Message **kernel_messages ;         /* Список сообщений */
+    static            int   kernel_messages_cnt ;
 
     static     Crowd_Name  *kernel_names ;            /* Список связанных имен */
     static            int   kernel_names_cnt ;

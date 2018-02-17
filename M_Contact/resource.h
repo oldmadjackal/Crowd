@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by L_Pair.rc
+// Used by M_Contact.rc
 //
 #define IDC_HELP_LIST                   1000
 

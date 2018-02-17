@@ -1,0 +1,4 @@
+LIBRARY M_Contact
+   EXPORTS
+         Identify   DATA
+	 GetEntry   DATA

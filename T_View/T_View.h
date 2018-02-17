@@ -31,7 +31,7 @@
 
     public:
                      int  cHelp         (char *, Crowd_IFace *) ;   /* Инструкция HELP */
-                     int  cRing         (char *, Crowd_IFace *) ;   /* Инструкция CLEAR */
+                     int  cRing         (char *, Crowd_IFace *) ;   /* Инструкция RING */
 
     public:
 	                  Crowd_Module_View() ;               /* Конструктор */

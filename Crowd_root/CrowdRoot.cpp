@@ -1526,6 +1526,9 @@ typedef  struct {
  { "all",       "all",   "# ALL - выдать список объектов",
                           NULL,
                          &Crowd_Module_Main::cAll },
+ { "messages",  "msg",   "# MESSAGES (MSG) - выдать список сообщений",
+                          NULL,
+                         &Crowd_Module_Main::cMessages },
  { "lookinfo",  "li",    "# LOOKINFO - показать параметры камеры ",
                           NULL,
                          &Crowd_Module_Main::cLookInfo },
@@ -1974,9 +1977,10 @@ typedef  struct {
    return(0) ;
 }
 
+
 /********************************************************************/
 /*								    */
-/*		      Реализация инструкции All                     */
+/*		      Реализация инструкции ALL                     */
 
   int  Crowd_Module_Main::cAll(char *cmd)
 
@@ -1988,6 +1992,27 @@ typedef  struct {
     DialogBoxIndirect(GetModuleHandle(NULL),
 			(LPCDLGTEMPLATE)Resource("IDD_OBJECTS_LIST", RT_DIALOG),
 			   GetActiveWindow(), Main_ObjectsList_dialog) ;
+
+/*-------------------------------------------------------------------*/
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*		      Реализация инструкции MESSAGES                */
+
+  int  Crowd_Module_Main::cMessages(char *cmd)
+
+{
+/*-------------------------------------- Дешифровка командной строки */
+
+/*----------------------------------------------- Выполнение диалога */
+
+    DialogBoxIndirect(GetModuleHandle(NULL),
+			(LPCDLGTEMPLATE)Resource("IDD_MESSAGES_LIST", RT_DIALOG),
+			   GetActiveWindow(), Main_MessagesList_dialog) ;
 
 /*-------------------------------------------------------------------*/
 

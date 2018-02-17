@@ -243,3 +243,106 @@
 }
 
 
+/*********************************************************************/
+/*								     */
+/*         Обработчик сообщений диалогового окна MESSAGES LIST       */
+
+    BOOL CALLBACK  Main_MessagesList_dialog(  HWND hDlg,     UINT Msg, 
+ 		  	                    WPARAM wParam, LPARAM lParam) 
+{
+  static HWND  hWnd_active_prv ;
+          int  elm ;               /* Идентификатор элемента диалога */
+          int  status ;
+         char  text[1024] ;
+          int  i ;
+
+#define   MESSAGES       Crowd_Kernel::kernel->kernel_messages 
+#define   MESSAGES_CNT   Crowd_Kernel::kernel->kernel_messages_cnt 
+     
+/*------------------------------------------------- Большая разводка */
+
+  switch(Msg) {
+
+/*---------------------------------------------------- Инициализация */
+
+    case WM_INITDIALOG: {
+/*- - - - - - - - - - - - - - - - - - - -  Перезапись активного окна */
+                    hWnd_active_prv=Crowd_Kernel::active_wnd ;
+           Crowd_Kernel::active_wnd= hDlg ;
+/*- - - - - - - - - - - - - - - - - - - - -  Инициализация элементов */
+                 LB_CLEAR(IDC_MESSAGES_LIST) ;
+
+       for(i=0 ; i<MESSAGES_CNT ; i++) {
+                            MESSAGES[i]->vFormDecl(text) ;
+             LB_ADD_ROW(IDC_MESSAGES_LIST, text) ;
+                                       }
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+  			  return(FALSE) ;
+  			     break ;
+  			}
+/*------------------------------------ Отработка внутренних сообений */
+
+    case WM_USER:  {
+/*- - - - - - - - - - - - - - - - - - - - - - -  Сообщение об ошибке */
+        if(wParam==_KEY_QUIT) {
+                                   EndDialog(hDlg, 0) ;
+                                       return(FALSE) ;
+                              }
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+			  return(FALSE) ;
+  			     break ;
+  		   }
+/*------------------------------------------------ Отработка событий */
+
+    case WM_COMMAND:    {
+
+	status=HIWORD(wParam) ;
+	   elm=LOWORD(wParam) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - Выбор модели */
+#if 0
+     if(elm==IDC_CREATE) {
+
+                  GETs(IDC_NAME,         data->name) ;
+                  GETs(IDC_LIBRARY_PATH, data->lib_path ) ;
+                  GETc(IDC_MODEL,        data->model) ;
+
+          for(i=0 ; i<5 ; i++)
+                  GETs(IDC_PAR_VALUE_1+i, data->pars[i].value) ;  
+
+                status=Module->CreateObject(data) ;
+             if(status==0)  EndDialog(hDlg, 0) ;
+
+                              return(FALSE) ;
+                         }
+#endif
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+			  return(FALSE) ;
+			     break ;
+			}
+/*--------------------------------------------------------- Закрытие */
+
+    case WM_CLOSE:      {
+                    
+                        Crowd_Kernel::active_wnd=hWnd_active_prv ;  /* Восстановление активного окна */
+
+                            EndDialog(hDlg, 0) ;
+  			       return(FALSE) ;
+			              break ;
+			}
+/*----------------------------------------------------------- Прочее */
+
+    default :        {
+			  return(FALSE) ;
+			    break ;
+		     }
+/*-------------------------------------------------------------------*/
+	      }
+/*-------------------------------------------------------------------*/
+
+#undef   MESSAGES
+#undef   MESSAGES_CNT
+
+    return(TRUE) ;
+}
+
+

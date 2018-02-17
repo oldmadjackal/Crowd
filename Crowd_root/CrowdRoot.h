@@ -41,6 +41,7 @@
                      int  cShowScene    (char *) ;              /* Инструкция SHOWSCENE */
                      int  cKill         (char *) ;              /* Инструкция KILL */
                      int  cAll          (char *) ;              /* Инструкция ALL */
+                     int  cMessages     (char *) ;              /* Инструкция MESSAGES */
                      int  cLookInfo     (char *) ;              /* Инструкция LOOKINFO */
                      int  cLookPoint    (char *) ;              /* Инструкция EYE */ 
                      int  cLookDirection(char *) ;              /* Инструкция LOOK */ 
@@ -93,8 +94,9 @@
      void  iDebug                     (char *, char *) ;
 
 /* CrowdRoot_dialog.cpp */
-    BOOL CALLBACK  Main_Help_dialog       (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна HELP */
-    BOOL CALLBACK  Main_ObjectsList_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна OBJECTS LIST */
+    BOOL CALLBACK  Main_Help_dialog        (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна HELP */
+    BOOL CALLBACK  Main_ObjectsList_dialog (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна OBJECTS LIST */
+    BOOL CALLBACK  Main_MessagesList_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна MESSAGES LIST */
 
 /* CrowdRoot_monitor.cpp */
       int  CrowdRoot_threads(char *, char *) ;      /* Мониторинг рабочих потоков */ 
