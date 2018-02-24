@@ -14,6 +14,8 @@
 
 #include "..\Crowd_Kernel\Crowd_Kernel.h"
 
+#include "..\DCL_kernel\dcl.h"
+
 #include "O_Human.h"
 
 #pragma warning(disable : 4996)

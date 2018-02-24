@@ -30,6 +30,7 @@
                virtual void  vFree         (void) ;                   /* Освободить ресурсы */  
                virtual void  vGetInfo      (std::string *) ;          /* Информация о сообщении */  
                virtual void  vFormDecl     (char *) ;                 /* Формировать описание */
+               virtual  int  vFormBySpec   (char *) ;                 /* Формировать сообщение по спецификации */
 
                virtual  int  vCheck        (class Crowd_Object *) ;   /* Проверка объекта-получателя */
 

@@ -40,6 +40,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      Crowd_Message::Crowd_Message()
 
 {
+    memset(Name, 0, sizeof(Name)) ;
     memset(Type, 0, sizeof(Type)) ;
     memset(Kind, 0, sizeof(Kind)) ;
 
@@ -117,6 +118,17 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     else                name_r="Broadcast" ;
 
    sprintf(text, "%s  %s->%s %s:%s", Name, name_s, name_r, Type, Kind) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*	      Формировать сообщение по специфкации     		    */
+
+    int  Crowd_Message::vFormBySpec(char *text)
+
+{
+   return(0) ;
 }
 
 

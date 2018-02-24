@@ -64,6 +64,7 @@
                                                         char * ) ;
             virtual void  vGetInfo      (std::string *) ;              /* Выдать информацию о свойстве */
             virtual  int  vParameter    (char *, char *, char *) ;     /* Работа с параметрами */  
+            virtual  int  vFormBySpec   (char *) ;                     /* Формировать сообщение по спецификации */
 
                     void  Show          (void) ;                       /* Отобразить объект */
 

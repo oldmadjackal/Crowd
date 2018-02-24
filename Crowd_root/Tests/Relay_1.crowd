@@ -1,0 +1,53 @@
+#step 0.
+
+#file tests\keys.keys
+
+human cr man1 cone
+human cr man2 cone
+human cr man3 cone
+human cr man4 cone
+human cr man5 cone
+human cr man6 cone
+human cr man7 cone
+man1 program tests\man.dcl
+man2 program tests\man.dcl
+man3 program tests\man.dcl
+man4 program tests\man.dcl
+man5 program tests\man.dcl
+man6 program tests\man.dcl
+man7 program tests\man.dcl
+
+view ring
+
+lookat 0 0 0 
+zoom-
+
+human cr dog cube
+dog program tests\dog.dcl
+
+pair kind pass
+pair kind call
+
+pair color call green
+
+pair link man1 man2 pass
+pair link man2 man3 pass
+pair link man3 man4 pass
+pair link man4 man5 pass
+pair link man5 man6 pass
+pair link man6 man7 pass
+pair link man7 man1 pass
+
+pair link man1 dog call
+pair link man2 dog call
+pair link man3 dog call
+pair link man4 dog call
+pair link man5 dog call
+pair link man6 dog call
+pair link man7 dog call
+
+contact create call man1 man2 Run!
+
+relay prepare call 0
+
+time 0.1

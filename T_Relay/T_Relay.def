@@ -1,0 +1,4 @@
+LIBRARY T_Relay
+   EXPORTS
+         Identify   DATA
+	 GetEntry   DATA

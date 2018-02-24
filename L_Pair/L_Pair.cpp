@@ -732,7 +732,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
        for(i=0 ; i<OBJECTS_CNT ; i++)
         for(j=0 ; j<OBJECTS[i]->Communications_cnt ; j++) {
 
-          if(LINK->Object_m>LINK->Object_s)  continue ;
+          if(LINK->Object_m!=OBJECTS[i])  continue ;
 
              glColor4d(GetRValue(LINK->Color)/256., 
                        GetGValue(LINK->Color)/256.,

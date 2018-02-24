@@ -20,6 +20,8 @@
 #include "..\Crowd_Kernel\Crowd_Kernel.h"
 #include "..\F_Show\F_Show.h"
 
+#include "..\DCL_kernel\dcl.h"
+
 #include "O_Human.h"
 
 #pragma warning(disable : 4996)
@@ -118,6 +120,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                    " VISIBLE <Имя> \n"
                    "   Изменить состояние видимости объекта на противоположное",
                    &Crowd_Module_Human::cVisible },
+ { "program", "p", "#PROGRAM - задание программы поведения объекта",
+                   " PROGRAM <Имя> <Путь к файлы программы>\n"
+                   "   Программа поведения объекта находится в файле",
+                   &Crowd_Module_Human::cProgram },
  {  NULL }
                                                             } ;
 
@@ -909,14 +915,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 { 
 #define   _PARS_MAX   4
-      char *pars[_PARS_MAX] ;
-      char *name ;
-  COLORREF  color ;
-       int  red, green, blue ;
-      char *end ;
-      char  text[1024] ;
-       int  i ;
-       int  j ;
+                 char *pars[_PARS_MAX] ;
+                 char *name ;
+   Crowd_Object_Human  *object ;
+             COLORREF  color ;
+                  int  red, green, blue ;
+                 char *end ;
+                  int  i ;
+                  int  j ;
 
 #define   OBJECTS       this->kernel->kernel_objects 
 #define   OBJECTS_CNT   this->kernel->kernel_objects_cnt 
@@ -938,7 +944,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*----------------------------------------------------- Разбор цвета */
 
      if(pars[1]==NULL) {
-                         SEND_ERROR("Не задано имя объекта. \n"
+                         SEND_ERROR("Не задано цвет объекта. \n"
                                     "Например: COLOR <Имя_объекта> GREEN") ;
                                         return(-1) ;
                        } 
@@ -970,25 +976,16 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                      return(-1) ;
                    }
 
-       for(i=0 ; i<OBJECTS_CNT ; i++)                               /* Ищем объект по имени */
-         if(!stricmp(OBJECTS[i]->Name, name))  break ;
+       object=FindObject(name) ;                                    /* Ищем объект по имени */
+    if(object==NULL)  return(-1) ;
 
-    if(i==OBJECTS_CNT) {                                            /* Если имя не найдено... */
-                           sprintf(text, "Объекта с именем '%s' "
-                                         "НЕ существует", name) ;
-                        SEND_ERROR(text) ;
-                            return(NULL) ;
-                       }
 /*---------------------------------- Подготовка отображения объектов */
 
-    for(j=0 ; j<OBJECTS[i]->Features_cnt ; j++)
-      if(!stricmp(OBJECTS[i]->Features[j]->Type, "Show"))  
-            ((Crowd_Feature_Show *)OBJECTS[i]->Features[j])->Color=color ;
+    for(j=0 ; j<object->Features_cnt ; j++)
+      if(!stricmp(object->Features[j]->Type, "Show"))  
+            ((Crowd_Feature_Show *)object->Features[j])->Color=color ;
 
 /*-------------------------------------------------------------------*/
-
-#undef    OBJECTS
-#undef    OBJECTS_CNT
 
    return(0) ;
 }
@@ -1038,6 +1035,74 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*------------------------------------------------------ Отображение */
 
                       this->kernel->vShow(NULL) ;
+
+/*-------------------------------------------------------------------*/
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*                   Реализация инструкции Program                  */
+/*       PROGRAM <Имя> <Путь к файлу программы>                     */
+
+  int  Crowd_Module_Human::cProgram(char *cmd)
+
+{ 
+#define   _PARS_MAX   4
+                 char *pars[_PARS_MAX] ;
+                 char *name ;
+                 char *path ;
+   Crowd_Object_Human  *object ;
+                 char *data ;
+                 char *end ;
+                 char  error[1024] ;
+                 char  text[1024] ;
+                  int  i ;
+
+/*------------------------------------------------ Разбор параметров */        
+
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+                     name=pars[0] ;
+                     path=pars[1] ;
+
+/*------------------------------------------- Поиск объекта по имени */ 
+
+    if(name==NULL) {                                                /* Если имя не задано... */
+                      SEND_ERROR("Не задано имя объекта. \n"
+                                 "Например: PROGRAM <Имя_объекта> ...") ;
+                                     return(-1) ;
+                   }
+
+       object=FindObject(name) ;                                    /* Ищем объект по имени */
+    if(object==NULL)  return(-1) ;
+
+/*----------------------------------------- Загрузка файла программы */
+
+     if(path==NULL) {
+                       SEND_ERROR("Не задан файл программы. \n"
+                                  "Например: PROGRAM <Имя объекта> <Путь к файлу программы>") ;
+                                        return(-1) ;
+                    } 
+
+        data=this->FileCache(path, error) ;
+     if(data==NULL) {
+                         sprintf(text, "Ошибка загрузки файла программы - %s", error) ;
+                      SEND_ERROR(text) ;
+                           return(-1) ;
+                    }
+
+                 object->Program=data ;
 
 /*-------------------------------------------------------------------*/
 
@@ -1102,13 +1167,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 {
    strcpy(Type, "Human") ;
-
-   Parameters    =NULL ;
-   Parameters_cnt=  0 ;
-
-      x_base=0 ;
-      y_base=0 ;
-      z_base=0 ;
 }
 
 
@@ -1180,9 +1238,156 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*      Отображение результата расчета изменения состояния          */
+/*                  Подготовка обработки событий                    */
 
-     int  Crowd_Object_Human::vCalculateShow(void)
+     int  Crowd_Object_Human::vEventStart(void)
+{
+  return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*                   Обработка события                              */
+
+     static         Crowd_Kernel *EventTask ;
+     static   Crowd_Object_Human *EventObject ;
+
+
+     int  Crowd_Object_Human::vEvent(long  t, char *type, void  *data, Crowd_Kernel *task)
+{
+     Crowd_Kernel *dcl ;
+    Crowd_Message *message ;
+  Crowd_Parameter  const_list[5] ;
+             void *context ;
+         COLORREF *color ;
+              int  color_r, color_g, color_b ;
+             char  error[1024] ;
+              int  status ;
+              int  i ;
+              int  j ;
+
+             char  msg_name[128] ;
+             char  msg_type[128] ;
+             char  msg_kind[128] ;
+             char  msg_sender[128] ;
+             char  obj_color[128] ;
+
+    Dcl_decl *Human_dcl_Log      (Lang_DCL *,             Dcl_decl **, int) ;    /* Запись в лог */
+    Dcl_decl *Human_dcl_ObjectXYZ(Lang_DCL *,             Dcl_decl **, int) ;    /* Выдача координат объекта */
+    Dcl_decl *Human_dcl_GetLinks (Lang_DCL *, Dcl_decl *, Dcl_decl **, int) ;    /* Получение списка связей */
+    Dcl_decl *Human_dcl_SendMsg  (Lang_DCL *,             Dcl_decl **, int) ;    /* Отправка сообщения */
+    Dcl_decl *Human_dcl_Recall   (Lang_DCL *,             Dcl_decl **, int) ;    /* Самовызов объекта */
+
+    Dcl_decl  dcl_human_lib[]={
+         {0, 0, 0, 0, "$PassiveData$", NULL, "human", 0, 0},
+	 {_CHR_AREA, 0,          0, 0, "$MsgName",            msg_name,            NULL,   0, sizeof(msg_name  )},
+	 {_CHR_AREA, 0,          0, 0, "$MsgType",            msg_type,            NULL,   0, sizeof(msg_type  )},
+	 {_CHR_AREA, 0,          0, 0, "$MsgKind",            msg_kind,            NULL,   0, sizeof(msg_kind  )},
+	 {_CHR_AREA, 0,          0, 0, "$MsgSender",          msg_sender,          NULL,   0, sizeof(msg_sender)},
+	 {_CHR_AREA, 0,          0, 0, "$ThisColor",          obj_color,           NULL,   0, sizeof(obj_color )},
+	 {_DGT_VAL,  0,          0, 0, "$ThisX",             &this->x_base,        NULL,   1,   1               },
+	 {_DGT_VAL,  0,          0, 0, "$ThisY",             &this->y_base,        NULL,   1,   1               },
+	 {_DGT_VAL,  0,          0, 0, "$ThisZ",             &this->z_base,        NULL,   1,   1               },
+ 	 {_CHR_PTR, _DCL_CALL,   0, 0, "Log",         (void *)Human_dcl_Log,       "s",    0,   0               },
+ 	 {_DGT_VAL, _DCL_CALL,   0, 0, "ObjectXYZ",   (void *)Human_dcl_ObjectXYZ, "ss",   0,   0               },
+ 	 {_DGT_VAL, _DCL_METHOD, 0, 0, "GetLinks",    (void *)Human_dcl_GetLinks,  "ssss", 0,   0               },
+ 	 {_DGT_VAL, _DCL_CALL,   0, 0, "SendMessage", (void *)Human_dcl_SendMsg,   "ssss", 0,   0               },
+ 	 {_DGT_VAL, _DCL_CALL,   0, 0, "Recall",      (void *)Human_dcl_Recall,    "s",    0,   0               },
+	 {0, 0, 0, 0, "", NULL, NULL, 0, 0}
+                              } ;
+
+/*-------------------------------------- Определение DCL-вычислителя */
+
+#define  CALC_CNT   Crowd_Kernel::calculate_modules_cnt
+#define  CALC       Crowd_Kernel::calculate_modules
+
+                      dcl=NULL ;
+
+         for(i=0 ; i<CALC_CNT ; i++) {
+
+             status=CALC[i]->vCalculate("DCL", NULL, NULL, NULL, 
+                                               NULL, NULL, NULL ) ;
+         if(status==0)  dcl=CALC[i] ;
+                                     }
+
+          if(dcl==NULL) {
+               SEND_ERROR("Section HUMAN: Не загружен процессор DCL-сценариев") ;
+                            return(-1) ;
+                        }
+
+#undef   CALC_CNT
+#undef   CALC
+
+/*------------------------------------------------ Подготовка данных */
+
+        memset(const_list, 0, sizeof(const_list)) ;
+
+        strcpy(const_list[0].name, "$LIBRARY") ;
+               const_list[0].ptr=(double *)dcl_human_lib ;
+
+        memset(error, 0, sizeof(error)) ; 
+
+    for(j=0 ; j<this->Features_cnt ; j++)
+      if(!stricmp(this->Features[j]->Type, "Show"))  
+            color=&((Crowd_Feature_Show *)this->Features[j])->Color ;
+
+/*---------------------------------------------- Обработка сообщений */
+
+   if(!stricmp(type, "MESSAGE")) {
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Подготовка данных */
+                  EventObject= this ;
+                    EventTask= task ;
+                      message=(Crowd_Message *)data ;
+
+           memset(msg_name, 0, sizeof(msg_name)) ;                  /* $MsgName */ 
+          strncpy(msg_name, message->Name, sizeof(msg_name)-1) ;
+
+           memset(msg_type, 0, sizeof(msg_type)) ;                  /* $MsgType */ 
+          strncpy(msg_type, message->Type, sizeof(msg_type)-1) ;
+
+           memset(msg_kind, 0, sizeof(msg_kind)) ;                  /* $MsgKind */ 
+          strncpy(msg_kind, message->Kind, sizeof(msg_kind)-1) ;
+
+           memset(msg_sender, 0, sizeof(msg_sender)) ;              /* $MsgSender */ 
+     if(message->Object_s!=NULL)
+          strncpy(msg_sender, message->Object_s->Name, sizeof(msg_sender)-1) ;
+
+           memset(obj_color, 0, sizeof(obj_color)) ;                /* $ObjectColor */ 
+          sprintf(obj_color, "%03d:%03d:%03d", (int)GetRValue(*color), (int)GetGValue(*color), (int)GetBValue(*color)) ;
+
+       for(i=0 ; dcl_human_lib[i].name[0]!=0 ; i++)
+         if(dcl_human_lib[i].type     ==_CHR_AREA &&
+            dcl_human_lib[i].func_flag==  0         )  
+             dcl_human_lib[i].size=strlen((char *)dcl_human_lib[i].addr) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - Выполнение программы */
+                      context= NULL ;
+
+           status=dcl->vCalculate("DCL", this->Program,
+                                  const_list, NULL, NULL, &context, error) ;
+                  dcl->vCalculate("CLEAR", NULL, NULL, NULL, NULL, &context, error) ;
+
+        if(status) {
+                      SEND_ERROR(error) ;
+                            return(-1) ;
+                   }
+/*- - - - - - - - - - - - - - - - - - - Обработка исходящих значений */
+         sscanf(obj_color, "%d:%d:%d", &color_r, &color_g, &color_b) ;
+     *color=RGB(color_r, color_g, color_b) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                 }
+/*-------------------------------------------------------------------*/
+
+ 
+  return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*            Отображение результата обработки события              */
+
+     int  Crowd_Object_Human::vEventShow(void)
 {
   int  i ;
 
@@ -1202,6 +1407,428 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 
   return(0) ;
+}
+
+
+
+/********************************************************************/
+/*								    */
+/*                   Занесение данных в отладочный лог              */
+
+  Dcl_decl *Human_dcl_Log( Lang_DCL  *dcl_kernel,
+                           Dcl_decl **pars, 
+                                int   pars_cnt)
+{
+   char  text[1024] ;
+
+ static     char  chr_value[512] ;          /* Буфер строки */
+ static Dcl_decl  chr_return={ _CHR_PTR, 0,0,0,"", chr_value, NULL, 0, 512} ;
+
+/*---------------------------------------------------- Инициализация */
+
+                 memset(chr_value, 0, sizeof(chr_value)) ;
+                        chr_return.size=0 ;
+
+/*-------------------------------------------- Извлечение параметров */
+
+       if(pars_cnt     !=1   ||                                     /* Проверяем число параметров */
+	  pars[0]->addr==NULL  ) {
+                                    dcl_kernel->mError_code=_DCLE_PROTOTYPE ;
+                                      return(&chr_return) ; 
+                                 }
+
+                    memset(text, 0, sizeof(text)) ;                 /* Извлекаем ссылку на файл */
+        if(pars[0]->size>=sizeof(text))
+                    memcpy(text, pars[0]->addr, sizeof(text)-1) ;
+        else        memcpy(text, pars[0]->addr, pars[0]->size) ;
+
+/*----------------------------------------------------- Запись в лог */
+
+     if(EventTask!=NULL) {
+
+                EventTask->vSpecial("LOG", text, NULL) ;
+
+                         }
+/*-------------------------------------------------------------------*/
+
+  return(&chr_return) ;
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*                  Выдача координат объекта                         */
+
+   Dcl_decl *Human_dcl_ObjectXYZ(Lang_DCL  *dcl_kernel,
+                                 Dcl_decl **pars, 
+                                      int   pars_cnt)
+
+{
+           char  name[128] ;
+           char  elem[128] ;
+            int  i ;
+
+ static   double  dgt_value ;          /* Буфер числового значения */
+ static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
+
+/*---------------------------------------------------- Инициализация */
+
+                              dgt_value=0. ;
+
+/*-------------------------------------------- Извлечение параметров */
+
+       if(pars_cnt     !=2    ||                                     /* Проверяем число параметров */
+	  pars[0]->addr==NULL ||
+	  pars[1]->addr==NULL   ) {
+                                    dcl_kernel->mError_code=_DCLE_PROTOTYPE ;
+                                      return(&dgt_return) ; 
+                                  }
+
+                    memset(name, 0, sizeof(name)) ;                 /* Извлекаем имя объекта */
+        if(pars[0]->size>=sizeof(name))
+                    memcpy(name, pars[0]->addr, sizeof(name)-1) ;
+        else        memcpy(name, pars[0]->addr, pars[0]->size) ;
+
+                    memset(elem, 0, sizeof(elem)) ;                 /* Извлекаем имя элемента */
+        if(pars[1]->size>=sizeof(elem))
+                    memcpy(elem, pars[1]->addr, sizeof(elem)-1) ;
+        else        memcpy(elem, pars[1]->addr, pars[1]->size) ;
+
+/*-------------------------------------------- Выдача данных объекта */
+
+#define   OBJECTS       ProgramModule.kernel_objects 
+#define   OBJECTS_CNT   ProgramModule.kernel_objects_cnt 
+
+       for(i=0 ; i<OBJECTS_CNT ; i++)                               /* Ищем объект по имени */
+         if(!stricmp(OBJECTS[i]->Name, name))  break ;
+
+    if(i==OBJECTS_CNT) {                                            /* Если имя не найдено... */
+                         dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                  strcpy(dcl_kernel->mError_details, "Unknown object") ;
+                              return(&dgt_return) ;
+                       }
+
+         if(!stricmp(elem, "X"))  dgt_value=OBJECTS[i]->x_base ;
+    else if(!stricmp(elem, "Y"))  dgt_value=OBJECTS[i]->y_base ;
+    else if(!stricmp(elem, "Z"))  dgt_value=OBJECTS[i]->z_base ;
+    else                         {
+                         dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                  strcpy(dcl_kernel->mError_details, "Unknown object element") ;
+                              return(&dgt_return) ;
+                                 }
+
+#undef   OBJECTS
+#undef   OBJECTS_CNT
+
+/*-------------------------------------------------------------------*/
+
+  return(&dgt_return) ;
+
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*                  Получение списка связей объекта                  */
+
+   Dcl_decl *Human_dcl_GetLinks(Lang_DCL  *dcl_kernel,
+                                Dcl_decl  *source, 
+                                Dcl_decl **pars, 
+                                     int   pars_cnt)
+
+{
+   char  type[128] ;
+   char  kind[128] ;
+   char  name[128] ;
+   char  role[128] ;
+   char *name_m ;
+   char *name_s ;
+   char  link_type[128] ;
+   char  link_kind[128] ;
+   char  link_m   [128] ;
+   char  link_s   [128] ;
+   char  link_p   [128] ;
+    int  status ;
+    int  i ;
+
+          Dcl_decl  rec_data[5] ={
+                                  {_CHR_AREA, 0, 0, 0, "type",             0,  link_type, 128, 128},
+                                  {_CHR_AREA, 0, 0, 0, "kind",    (void *)128, link_kind, 128, 128},
+                                  {_CHR_AREA, 0, 0, 0, "master",  (void *)256, link_m,    128, 128},
+                                  {_CHR_AREA, 0, 0, 0, "slave",   (void *)384, link_s,    128, 128},
+                                  {_CHR_AREA, 0, 0, 0, "partner", (void *)512, link_p,    128, 128}
+                                 } ;
+  Dcl_complex_type  rec_template={ "link", 640, rec_data, 5} ;
+
+ static   double  dgt_value ;          /* Буфер числового значения */
+ static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
+
+/*---------------------------------------------------- Инициализация */
+
+                              dgt_value=0 ;
+
+/*-------------------------------------------- Извлечение параметров */
+
+       if(pars_cnt     !=4    ||                                    /* Проверяем число параметров */
+	  pars[0]->addr==NULL ||
+	  pars[1]->addr==NULL ||
+	  pars[2]->addr==NULL ||
+	  pars[3]->addr==NULL   ) {
+                                    dcl_kernel->mError_code=_DCLE_PROTOTYPE ;
+                                      return(&dgt_return) ; 
+                                  }
+
+                    memset(type, 0, sizeof(type)) ;                 /* Извлекаем фильтр по типу */
+        if(pars[0]->size>=sizeof(type))
+                    memcpy(type, pars[0]->addr, sizeof(type)-1) ;
+        else        memcpy(type, pars[0]->addr, pars[0]->size) ;
+
+                    memset(kind, 0, sizeof(kind)) ;                 /* Извлекаем фильтр по виду */
+        if(pars[1]->size>=sizeof(kind))
+                    memcpy(kind, pars[1]->addr, sizeof(kind)-1) ;
+        else        memcpy(kind, pars[1]->addr, pars[1]->size) ;
+
+                    memset(name, 0, sizeof(name)) ;                 /* Извлекаем фильтр по имени */
+        if(pars[2]->size>=sizeof(name))
+                    memcpy(name, pars[2]->addr, sizeof(name)-1) ;
+        else        memcpy(name, pars[2]->addr, pars[2]->size) ;
+
+                    memset(role, 0, sizeof(role)) ;                 /* Извлекаем фильтр по роли */
+        if(pars[3]->size>=sizeof(role))
+                    memcpy(role, pars[3]->addr, sizeof(role)-1) ;
+        else        memcpy(role, pars[3]->addr, pars[3]->size) ;
+
+        if(!stricmp(name, "this"))  strcpy(name, EventObject->Name) ;
+
+/*------------------------------------------------ Выдача информации */
+
+#define  LINK  EventObject->Communications[i]
+
+    for(i=0 ; i<EventObject->Communications_cnt ; i++) {
+
+         if(type[0]!=0)
+          if(stricmp(type, LINK->Type))  continue ;
+
+         if(kind[0]!=0)
+          if(stricmp(kind, LINK->Kind))  continue ;
+
+                                   name_m= "" ;
+         if(LINK->Object_m!=NULL)  name_m=LINK->Object_m->Name ;
+                                   name_s= "" ;
+         if(LINK->Object_s!=NULL)  name_s=LINK->Object_s->Name ;
+
+        if( stricmp(name, ""      )) {
+         if(!stricmp(role, ""      ))
+           if( stricmp(name, name_m) &&
+               stricmp(name, name_s)   )  continue ;
+         if(!stricmp(role, "master")   )
+           if( stricmp(name, name_m))     continue ;
+         if(!stricmp(role, "slave" ))
+           if( stricmp(name, name_s)   )  continue ;
+         if(!stricmp(role, "none"  )   )
+           if(!stricmp(name, name_m) ||
+              !stricmp(name, name_s)   )  continue ;
+                                     }
+ 
+                                          strcpy(link_type, LINK->Type) ;
+                                          strcpy(link_kind, LINK->Kind) ;
+                                          strcpy(link_m   , name_m) ;
+                                          strcpy(link_s   , name_s) ;
+         if(LINK->Object_m==EventObject)  strcpy(link_p   , link_s) ;
+         else                             strcpy(link_p   , link_m) ;
+
+                    rec_data[0].size=strlen(rec_data[0].prototype) ;
+                    rec_data[1].size=strlen(rec_data[1].prototype) ;
+                    rec_data[2].size=strlen(rec_data[2].prototype) ;
+                    rec_data[3].size=strlen(rec_data[3].prototype) ;
+                    rec_data[4].size=strlen(rec_data[4].prototype) ;
+
+          status=dcl_kernel->iXobject_add(source, &rec_template) ;
+       if(status) break ;
+                                                       }
+#undef  LINK
+
+/*-------------------------------------------------------------------*/
+
+  return(&dgt_return) ;
+
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*                      Отправка сообщения                           */
+
+   Dcl_decl *Human_dcl_SendMsg(Lang_DCL  *dcl_kernel,
+                               Dcl_decl **pars, 
+                                    int   pars_cnt)
+{
+          char  name[128] ;
+          char  type[128] ;
+          char  kind[128] ;
+          char  spec[1024] ;
+        double  wait ;
+  Crowd_Kernel *msg_module ;
+ Crowd_Message *message ;
+  Crowd_Object *receiver ;
+           int  status ;
+           int  i ;
+
+ static   double  dgt_value ;          /* Буфер числового значения */
+ static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
+
+/*---------------------------------------------------- Инициализация */
+
+                              dgt_value=0 ;
+
+/*-------------------------------------------- Извлечение параметров */
+
+       if(pars_cnt     < 4    ||                                    /* Проверяем число параметров */
+	  pars[0]->addr==NULL ||
+	  pars[1]->addr==NULL ||
+	  pars[2]->addr==NULL ||
+	  pars[3]->addr==NULL   ) {
+                                    dcl_kernel->mError_code=_DCLE_PROTOTYPE ;
+                                      return(&dgt_return) ; 
+                                  }
+
+                    memset(name, 0, sizeof(name)) ;                 /* Извлекаем имя получателя */
+        if(pars[0]->size>=sizeof(name))
+                    memcpy(name, pars[0]->addr, sizeof(name)-1) ;
+        else        memcpy(name, pars[0]->addr, pars[0]->size) ;
+
+                    memset(type, 0, sizeof(type)) ;                 /* Извлекаем тип сообщения */
+        if(pars[1]->size>=sizeof(type))
+                    memcpy(type, pars[1]->addr, sizeof(type)-1) ;
+        else        memcpy(type, pars[1]->addr, pars[1]->size) ;
+
+                    memset(kind, 0, sizeof(kind)) ;                 /* Извлекаем вид сообщения */
+        if(pars[2]->size>=sizeof(kind))
+                    memcpy(kind, pars[2]->addr, sizeof(kind)-1) ;
+        else        memcpy(kind, pars[2]->addr, pars[2]->size) ;
+
+                    memset(spec, 0, sizeof(spec)) ;                 /* Извлекаем спецификацию сообщения */
+        if(pars[3]->size>=sizeof(spec))
+                    memcpy(spec, pars[3]->addr, sizeof(spec)-1) ;
+        else        memcpy(spec, pars[3]->addr, pars[3]->size) ;
+
+                                  wait= 0 ;
+        if(pars_cnt==5)
+         if(pars[4]->addr!=NULL)  wait=dcl_kernel->iDgt_get(pars[4]->addr, pars[4]->type ) ;
+ 
+/*----------------------------------------------- Создание сообщения */
+
+#define  KERNEL  ProgramModule.kernel
+
+     for(i=0 ; i<KERNEL->modules_cnt ; i++)                         /* Поиск модуля, работающего с заданным типом сообщения */
+       if(!stricmp(KERNEL->modules[i].entry->identification, type)) {
+                     msg_module=KERNEL->modules[i].entry ;
+                            break ;
+                                                                    }
+ 
+       if(i>=KERNEL->modules_cnt) {                                 /* Если такой модуль не найден... */
+                         dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                  strcpy(dcl_kernel->mError_details, "Unknown message type") ;
+                                       return(&dgt_return) ;
+                                  }
+
+                         receiver= NULL ;
+
+       if(name[0]!=0) {
+
+              receiver=ProgramModule.FindObject(name) ;
+           if(receiver==NULL) {
+                                 dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                          strcpy(dcl_kernel->mError_details, "Unknown receiver") ;
+                                       return(&dgt_return) ;
+                              }
+                      }
+
+                 message=msg_module->vCreateMessage(EventObject, receiver, NULL) ;
+          strcpy(message->Kind, kind) ;
+
+          status=message->vFormBySpec(spec) ;
+       if(status) {
+                         dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                  strcpy(dcl_kernel->mError_details, "Message forming error") ;
+                              return(&dgt_return) ;
+                  }
+
+/*----------------------------------- Постановка сообщения в очередь */
+
+          status=EventTask->vAddMessage(message, wait+1) ;
+       if(status) {
+                         dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                  strcpy(dcl_kernel->mError_details, "Message queuing up error") ;
+                              return(&dgt_return) ;
+                  }
+/*-------------------------------------------------------------------*/
+
+  return(&dgt_return) ;
+
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*                      Самовызов объекта                            */
+
+   Dcl_decl *Human_dcl_Recall(Lang_DCL  *dcl_kernel,
+                              Dcl_decl **pars, 
+                                   int   pars_cnt)
+{
+          char  kind[128] ;
+        double  wait ;
+  Crowd_Kernel *msg_module ;
+ Crowd_Message *message ;
+  Crowd_Object *receiver ;
+           int  status ;
+           int  i ;
+
+ static   double  dgt_value ;          /* Буфер числового значения */
+ static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
+
+/*---------------------------------------------------- Инициализация */
+
+                              dgt_value=0 ;
+
+/*-------------------------------------------- Извлечение параметров */
+
+       if(pars_cnt     < 1    ||                                    /* Проверяем число параметров */
+	  pars[0]->addr==NULL   ) {
+                                    dcl_kernel->mError_code=_DCLE_PROTOTYPE ;
+                                      return(&dgt_return) ; 
+                                  }
+
+                    memset(kind, 0, sizeof(kind)) ;                 /* Извлекаем вид сообщения */
+        if(pars[0]->size>=sizeof(kind))
+                    memcpy(kind, pars[0]->addr, sizeof(kind)-1) ;
+        else        memcpy(kind, pars[0]->addr, pars[0]->size) ;
+
+                                  wait= 0 ;
+        if(pars_cnt==2)
+         if(pars[1]->addr!=NULL)  wait=dcl_kernel->iDgt_get(pars[1]->addr, pars[1]->type ) ;
+ 
+/*----------------------------------------------- Создание сообщения */
+
+                 message=new Crowd_Message ;
+          strcpy(message->Type, "Recall") ;
+          strcpy(message->Kind, kind) ;
+                 message->Object_s=NULL ;
+                 message->Object_r=EventObject ; 
+
+/*----------------------------------- Постановка сообщения в очередь */
+
+          status=EventTask->vAddMessage(message, wait+1) ;
+       if(status) {
+                         dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                  strcpy(dcl_kernel->mError_details, "Message queuing up error") ;
+                              return(&dgt_return) ;
+                  }
+/*-------------------------------------------------------------------*/
+
+  return(&dgt_return) ;
+
 }
 
 

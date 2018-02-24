@@ -427,7 +427,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*		   Поиск обьекта по имени                           */
+/*		   Поиск сообщения по имени                         */
 
   Crowd_Message *Crowd_Module_Contact::FindMessage(char *name)
 
@@ -477,6 +477,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 {
    strcpy(Type, "Contact") ;
+   strcpy(Name, "") ;
    strcpy(Kind, "") ;
 }
 
@@ -535,4 +536,15 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*-------------------------------------------------------------------*/
 
    return(-1) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*	      Формировать сообщение по специфкации     		    */
+
+    int  Crowd_Message_Contact::vFormBySpec(char *text)
+
+{
+   return(0) ;
 }

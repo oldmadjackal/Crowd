@@ -57,6 +57,7 @@
              nTransit     =NULL ;
              nTransit_cnt =  0 ;
              nTransit_num =  0 ;
+     memset(&nResult, 0, sizeof(nResult)) ;
      memset(&nReturn, 0, sizeof(nReturn)) ;
              nRet_data    =NULL ;
 

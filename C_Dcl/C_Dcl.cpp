@@ -150,19 +150,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      extern double  dcl_errno ;            /* Системный указатель ошибок -> DCL_SLIB.CPP */
      extern   char  dcl_err_details[512] ; /* Системный указатель расширенного описания ошибок -> DCL_SLIB.CPP */
 
-//  Dcl_decl *ERPC_dcl_GetDocs       (Lang_DCL *, Dcl_decl *, Dcl_decl **, int) ;    /* Получение списка связанных документов */
-//  Dcl_decl *ERPC_dcl_ExtractDoc    (Lang_DCL *,             Dcl_decl **, int) ;    /* Извлечение документа из хранилища */
-
-    Dcl_decl  dcl_crowd_lib[]={
-
-         {0, 0, 0, 0, "$PassiveData$", NULL, "erpc", 0, 0},
-//	 {_DGT_VAL, _DCL_METHOD, 0, 0, "GetDocs",          (void *)ERPC_dcl_GetDocs,        "s",    0, 0},
-//	 {_CHR_PTR, _DCL_CALL,   0, 0, "ExtractDoc",       (void *)ERPC_dcl_ExtractDoc,     "s",    0, 0},
-	 {0, 0, 0, 0, "", NULL, NULL, 0, 0}
-                             } ;
-
-
-             int ERPC_dcl_debug(void) ;
+//             int ERPC_dcl_debug(void) ;
 
 
   int  Crowd_Calc_Dcl::vCalculate(            char  *program_type, 
@@ -181,9 +169,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 #define  _SYSVARS_MAX    100
 
      Dcl_decl *vars[10] ;
+          int  vars_cnt ;
          char *libs[10] ;
      Dcl_decl  sys_vars[_SYSVARS_MAX] ;
          char  crn_path[512] ;
+          int  j ;
 
  extern Dcl_decl  dcl_debug_lib[] ;  
  extern Dcl_decl  dcl_std_lib[] ;
@@ -198,19 +188,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
    if(context_ptr==NULL)  return(0) ;
 
-#ifdef REMARK
 
-//                                   iDebug("ExpressionType:", NULL) ;
-//      if(expression_type!=NULL)    iDebug(expression_type, NULL) ;
-//      else                         iDebug("NULL", NULL) ;
-//                                   iDebug("Expression:", NULL) ;
-//      if(expression!=NULL)         iDebug(expression, NULL) ;
-//      else                    {
-//                                   iDebug("NULL", NULL) ;
-//                              }
-//
-//            lng_debug     = 1 ;
-//            lng_user_debug=RSS_Calc_Std_debug ;
 
 /*------------------------------------------------ Очистка контекста */
 
@@ -225,15 +203,19 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
                            return(0) ;
                                        }
-/*-------------------------------------------- Подключение библиотек */
+/*---------------------------------- Подключение системных библиотек */
 
        memset(vars, 0, sizeof(vars)) ;
 
-	   vars[0]=sys_vars ;                                       /* Список переменных и функций */
-	   vars[1]=dcl_debug_lib ;
-	   vars[2]=dcl_std_lib ;
-	   vars[3]=dcl_file_lib ;
-	   vars[4]=dcl_crowd_lib ;
+                vars_cnt = 0 ;
+	   vars[vars_cnt]=sys_vars ;                                       /* Список переменных и функций */
+                vars_cnt++ ;
+	   vars[vars_cnt]=dcl_debug_lib ;
+                vars_cnt++ ;
+	   vars[vars_cnt]=dcl_std_lib ;
+                vars_cnt++ ;
+	   vars[vars_cnt]=dcl_file_lib ;
+                vars_cnt++ ;
 
        memset(libs, 0, sizeof(libs)) ;
 
@@ -254,7 +236,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                                   return(-1) ;
                            }
                          }
-/*----------------------------------------------- Внешние переменные */
+/*---------------------------------- Внешние библиотеки и переменные */
 
        memset(sys_vars, 0, sizeof(sys_vars)) ;
 
@@ -267,24 +249,17 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                sys_vars[i].buff= -1 ;
                         i++ ;
 */
-/*
+
       if(const_list!=NULL) {
          for(j=0 ; const_list[j].name[0] ; j++) {
 
-           if(const_list[j].ptr!=NULL && const_flag==1)  continue ;
+           if(!stricmp(const_list[j].name, "$LIBRARY")) {
 
-                     variables[i].name     =(unsigned char *)const_list[j].name ;
-                     variables[i].func_flag=  0 ;
-                     variables[i].type     =_CCL_DOUBLE ;
-
-           if(const_list[j].ptr==NULL)
-                     variables[i].addr=&const_list[j].value ;
-           else      variables[i].addr= const_list[j].ptr  ;
-                               i++ ;
+                         vars[vars_cnt]=(Dcl_decl *)const_list[j].ptr ;
+                              vars_cnt++ ;
+                                                        }
                                                 }
                            }
-
-*/
 /*-------------------------------- Выполнение операционной процедуры */
 
                      DCL.mWorkDir    =crn_path ;
@@ -315,12 +290,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                           }
 /*---------------------------------------------- Обработка контекста */
 
-                               *context_ptr=context ;
+          *context_ptr=context ;
 
 /*-------------------------------------------------------------------*/
-#endif
 
-      return( 0) ;  
+      return(0) ;
 }
 
 

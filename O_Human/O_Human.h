@@ -19,12 +19,15 @@
   class O_HUMAN_API Crowd_Object_Human : public Crowd_Object {
 
     public:
-                      char  model_path[FILENAME_MAX] ;        /* Файл модели */
+                      char  model_path[FILENAME_MAX] ;            /* Файл модели */
 
     public:
-               virtual void  vFree          (void) ;          /* Освободить ресурсы */
-               virtual void  vWriteSave     (std::string *) ; /* Записать данные в строку */
-               virtual  int  vCalculateShow (void) ;          /* Отображение результата расчета изменения состояния */
+               virtual void  vFree      (void) ;                  /* Освободить ресурсы */
+               virtual void  vWriteSave (std::string *) ;         /* Записать данные в строку */
+               virtual  int  vEventStart(void) ;                  /* Подготовка обработки событий */
+               virtual  int  vEvent     (long, char *,            /* Обработка события */
+                                               void *, Crowd_Kernel *) ;  
+               virtual  int  vEventShow (void) ;                  /* Отображение результата обработки события */
 
 	                     Crowd_Object_Human() ;           /* Конструктор */
 	                    ~Crowd_Object_Human() ;           /* Деструктор */
@@ -53,6 +56,7 @@
                        int  cBase         (char *) ;             /* Инструкция BASE */ 
                        int  cColor        (char *) ;             /* Инструкция COLOR */
                        int  cVisible      (char *) ;             /* Инструкция VISIBLE */
+                       int  cProgram      (char *) ;             /* Инструкция PROGRAM */
 
         Crowd_Object_Human *FindObject    (char *) ;             /* Поиск обьекта типа HUMAN по имени */
 

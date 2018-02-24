@@ -449,7 +449,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                     SendMessage(ITEM(IDC_STATUS_INFO),
                                   WM_SETFONT, (WPARAM)font, 0) ;
 /*- - - - - - - - - - - - - - - - -  Инициализация значеий элементов */
-            SETs(IDC_COMMAND, "@Tests\\objects.crowd") ;
+            SETs(IDC_COMMAND, "@Tests\\relay_1.crowd") ;
 /*- - - - - - - - - - - - - - - - - - - - - - - Инициализация фокуса */
                           SetFocus(ITEM(IDC_COMMAND)) ;
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
@@ -841,7 +841,7 @@ typedef  struct {
 
                         hDlg=hDialog ;
 
-                      Crowd_Kernel::kernel->stop=0 ;
+                      Crowd_Kernel::kernel->debug_stop=0 ;
 
                            arrow_command=0 ;
 
@@ -2953,7 +2953,7 @@ typedef  struct {
   int  Crowd_Module_Main::cStop(char *cmd)
 
 { 
-      Crowd_Kernel::kernel->stop=1 ;
+      Crowd_Kernel::kernel->debug_stop=1 ;
 
    return(0) ;
 }
@@ -2966,7 +2966,7 @@ typedef  struct {
   int  Crowd_Module_Main::cNext(char *cmd)
 
 { 
-      Crowd_Kernel::kernel->next=_CROWD_KERNEL_NEXT_STEP ;
+      Crowd_Kernel::kernel->debug_next=_CROWD_KERNEL_NEXT_STEP ;
 
    return(0) ;
 }
@@ -2979,7 +2979,7 @@ typedef  struct {
   int  Crowd_Module_Main::cResume(char *cmd)
 
 {
-      Crowd_Kernel::kernel->next=0 ;
+      Crowd_Kernel::kernel->debug_next=0 ;
 
    return(0) ;
 }

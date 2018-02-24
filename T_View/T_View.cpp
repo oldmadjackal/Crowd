@@ -312,7 +312,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             OBJECTS[i]->y_base=rad*sin(angle*i) ;
             OBJECTS[i]->z_base=0. ;
 
-            OBJECTS[i]->vCalculateShow() ;
+            OBJECTS[i]->vEventShow() ;
 
                                       }
 /*------------------------------------------------------ Перерисовка */

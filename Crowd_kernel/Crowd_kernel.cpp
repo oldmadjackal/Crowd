@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <math.h>
 #include <sys\timeb.h>
+#include <sys/types.h> 
+#include <sys/stat.h>
 
 #include <windows.h>
 
@@ -44,9 +46,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  CROWD_KERNEL_API            HWND   Crowd_Kernel::active_wnd           =NULL ;
  CROWD_KERNEL_API       HINSTANCE   Crowd_Kernel::kernel_inst          =NULL ;
 
- CROWD_KERNEL_API             int   Crowd_Kernel::battle               =  0 ;
- CROWD_KERNEL_API             int   Crowd_Kernel::stop                 =  0 ;
- CROWD_KERNEL_API             int   Crowd_Kernel::next                 =  0 ;
+ CROWD_KERNEL_API             int   Crowd_Kernel::debug_stop           =  0 ;
+ CROWD_KERNEL_API             int   Crowd_Kernel::debug_next           =  0 ;
 
  CROWD_KERNEL_API    Crowd_Object **Crowd_Kernel::kernel_objects       =NULL ; 
  CROWD_KERNEL_API             int   Crowd_Kernel::kernel_objects_cnt   =  0 ; 
@@ -59,6 +60,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
  CROWD_KERNEL_API    Crowd_Kernel **Crowd_Kernel::calculate_modules    =NULL ; 
  CROWD_KERNEL_API             int   Crowd_Kernel::calculate_modules_cnt=  0 ; 
+
+ CROWD_KERNEL_API      Crowd_File  *Crowd_Kernel::files                =NULL ; 
+ CROWD_KERNEL_API             int   Crowd_Kernel::files_cnt            =  0 ; 
 
  CROWD_KERNEL_API    Crowd_Result **Crowd_Kernel::results              =NULL ; 
  CROWD_KERNEL_API             int   Crowd_Kernel::results_cnt          =  0 ;
@@ -273,6 +277,56 @@ typedef Crowd_Kernel *(*MODULE_PTR)(void);
 
 /********************************************************************/
 /*								    */
+/*		      Загрузка используемых модулей		    */
+
+   char *Crowd_Kernel::FileCache(char *path, char *error)
+
+{
+    Crowd_File  cache ;
+  struct _stat  attr ;
+          FILE *file ;
+           int  i ; 
+
+/*------------------------------------------ Проверяем наличие файла */
+
+     for(i=0 ; i<this->files_cnt ; i++)
+       if(!stricmp(this->files[i].path, path))  return(this->files[i].data) ;
+
+/*--------------------------------------------------- Загрузка файла */
+
+     if(_stat(path, &attr)) {
+               sprintf(error, "File open error %d : %s", errno, path) ;
+                                return(NULL) ;
+                            } 
+
+        strcpy(cache.path, path) ;
+               cache.data=(char *)calloc(1, attr.st_size) ;
+
+        file=fopen(path, "rb") ;
+     if(file==NULL) {
+                        sprintf(error, "File open error %d : %s", errno, path) ;
+                           return(NULL) ;
+                    }
+
+           fread(cache.data, 1, attr.st_size, file) ;
+          fclose(file) ;
+
+/*---------------------------------------- Добавление файла в список */
+
+      this->files=(Crowd_File *)
+                    realloc(this->files, 
+                              sizeof(this->files[0])*(this->files_cnt+1)) ;
+
+      this->files[this->files_cnt]=cache ;
+
+/*-------------------------------------------------------------------*/
+
+  return(cache.data) ;
+}
+
+
+/********************************************************************/
+/*								    */
 /*		    Освобождение используемых модулей		    */
 
    int  Crowd_Kernel::Free(void)
@@ -445,6 +499,30 @@ typedef Crowd_Kernel *(*MODULE_PTR)(void);
 }
 
 
+/*********************************************************************/
+/*								     */
+/*		        Создать сообщение               	     */
+
+    Crowd_Message *Crowd_Kernel::vCreateMessage(Crowd_Object  *object_s,
+                                                Crowd_Object  *object_r,
+                                                Crowd_Message *message_ext  )
+
+{
+  return(NULL) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*	        Добавить сообщение в очередь                  	    */
+
+    int  Crowd_Kernel::vAddMessage(Crowd_Message *message, 
+                                             int  zone    )
+{
+   return(0) ;
+}
+
+
 /********************************************************************/
 /*								    */
 /*		        Выполнить команду       		    */
@@ -533,6 +611,17 @@ typedef Crowd_Kernel *(*MODULE_PTR)(void);
     void  Crowd_Kernel::vChangeContext(void)
 
 {
+}
+
+
+/********************************************************************/
+/*								    */
+/*	                Специальный интерфейс                       */
+
+  int  Crowd_Kernel::vSpecial(char *action, void *object, char *details)
+
+{
+   return(0) ;
 }
 
 

@@ -100,6 +100,12 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
 
                  }  Crowd_Memory ;
 
+/*----------------------------------------------- Кэширование файлов */
+
+ typedef  struct {
+                    char  path[FILENAME_MAX] ;
+                    char *data ;
+                 }  Crowd_File ;
 
 /*------------------------------------- Интерфейс межмодульной связи */
 
@@ -137,9 +143,8 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
     static           HWND   active_wnd ;            /* Активное oкно */
     static      HINSTANCE   kernel_inst ;           /* Идентификатор модуля ядра */
 
-    static          int   battle ;                  /* Флаг режима моделирования боя */
-    static          int   stop ;                    /* Флаг остановки исполнения */
-    static          int   next ;                    /* Флаг исполнения очередного шага */
+    static            int   debug_stop ;            /* Флаг остановки исполнения */
+    static            int   debug_next ;            /* Флаг исполнения очередного шага */
 #define                    _CROWD_KERNEL_NEXT_STEP  1
 #define                    _CROWD_KERNEL_WAIT_STEP  2
 
@@ -161,6 +166,9 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
 
     static   Crowd_Kernel **calculate_modules ;       /* Список вычислителей */
     static            int   calculate_modules_cnt ;
+
+    static     Crowd_File  *files ;                   /* Список кэшированных файлов */
+    static            int   files_cnt ;
 
     static   Crowd_Result **results ;                 /* Стек результатов работы модулей */
     static            int   results_cnt ;
@@ -206,47 +214,55 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
                    void  *Resource (const char *,       /* Регистрация ресурса */
 				    const char * ) ; 
 		    int	  Load     (const char *) ;     /* Загрузка используемых модулей */
+                   char  *FileCache(char *, char *) ;   /* Загрузка файла в память */
 		    int	  Free     (void) ;	        /* Освобождение используемых модулей */
 		    
    public:
 	    virtual int   vKernelEvents (void) ;           /* Обработка событий */
 
    public:
-     virtual                void  vStart              (void) ;               /* Стартовая разводка */
-     virtual                void  vInit               (void) ;               /* Инициализация связей */
-     virtual                void  vReadSave           (std::string *) ;      /* Считать данные из строки */
-     virtual                void  vWriteSave          (std::string *) ;      /* Записать данные в строку */
-     virtual        Crowd_Object *vCreateObject       (Crowd_Model_data *) ; /* Создать объект */
-     virtual       Crowd_Feature *vCreateFeature      (Crowd_Object *,       /* Создать свойство */
+     virtual                void  vStart              (void) ;                     /* Стартовая разводка */
+     virtual                void  vInit               (void) ;                     /* Инициализация связей */
+     virtual                void  vReadSave           (std::string *) ;            /* Считать данные из строки */
+     virtual                void  vWriteSave          (std::string *) ;            /* Записать данные в строку */
+     virtual        Crowd_Object *vCreateObject       (Crowd_Model_data *) ;       /* Создать объект */
+     virtual       Crowd_Feature *vCreateFeature      (Crowd_Object *,             /* Создать свойство */
                                                        Crowd_Feature * ) ;
-     virtual Crowd_Communication *vCreateCommunication(Crowd_Object *,           /* Создать связь */
+     virtual Crowd_Communication *vCreateCommunication(Crowd_Object *,             /* Создать связь */
                                                        Crowd_Object *,
                                                        Crowd_Communication *) ;
-     virtual                 int  vExecuteCmd         (const char *) ;       /* Выполнить команду */
-     virtual                 int  vExecuteCmd         (const char *,         /* Выполнить команду с выдачей результата по ссылке */
+     virtual       Crowd_Message *vCreateMessage      (Crowd_Object *,             /* Создать сообщение */
+                                                       Crowd_Object *,
+                                                       Crowd_Message *) ;
+     virtual                 int  vAddMessage         (Crowd_Message *, int) ;     /* Регистрация сообщения в очереди */
+
+     virtual                 int  vExecuteCmd         (const char *) ;             /* Выполнить команду */
+     virtual                 int  vExecuteCmd         (const char *,               /* Выполнить команду с выдачей результата по ссылке */
                                                         Crowd_IFace *) ;
-     virtual                 int  vCalculate          (char *, char *,       /* Вычислить выражение */
+     virtual                 int  vCalculate          (char *, char *,             /* Вычислить выражение */
                                                         struct Crowd_Parameter *,
                                                         struct Crowd_Parameter *,
                                                         double *, void **, char *) ;
-     virtual                 int  vGetParameter       (char *, char *) ;     /* Получить параметр */
-     virtual                void  vSetParameter       (char *, char *) ;     /* Установить параметр */
-     virtual                void  vProcess            (void) ;               /* Выполнить целевой функционал */
-     virtual                void  vShow               (char *) ;             /* Отобразить связанные данные */
-     virtual                void  vChangeContext      (void)  ;              /* Выполнить действие в контексте потока */
+     virtual                 int  vGetParameter       (char *, char *) ;           /* Получить параметр */
+     virtual                void  vSetParameter       (char *, char *) ;           /* Установить параметр */
+     virtual                void  vProcess            (void) ;                     /* Выполнить целевой функционал */
+     virtual                void  vShow               (char *) ;                   /* Отобразить связанные данные */
+     virtual                void  vChangeContext      (void)  ;                    /* Выполнить действие в контексте потока */
 
-     virtual       Crowd_Context *vAddData            (Crowd_Context ***) ;  /* Ввод контекста модуля в список контекстов */
-     virtual                 int  vReadData           (Crowd_Context ***,    /* Считать данные контекста модуля из строки */
-                                                       std::string * ) ;
-     virtual                void  vWriteData          (Crowd_Context *,      /* Записать данные контекста модуля в строку */
-                                                       std::string * ) ;
-     virtual                void  vReleaseData        (Crowd_Context *) ;    /* Освободить ресурсы данных контекста модуля */
+     virtual                 int  vSpecial            (char *, void *, char *) ;   /* Специальный интерфейс */
 
-     virtual              double  vGetTime            (void) ;               /* Системное время */
+     virtual       Crowd_Context *vAddData            (Crowd_Context ***) ;        /* Ввод контекста в список контекстов */
+     virtual                 int  vReadData           (Crowd_Context ***,          /* Считать данные контекста модуля из строки */
+                                                       std::string * ) ;
+     virtual                void  vWriteData          (Crowd_Context *,            /* Записать данные контекста модуля в строку */
+                                                       std::string * ) ;
+     virtual                void  vReleaseData        (Crowd_Context *) ;          /* Освободить ресурсы данных контекста модуля */
+
+     virtual              double  vGetTime            (void) ;                     /* Системное время */
 
     public:
 
-                  double  gGaussianValue(double, double) ;     /* Нормальное распределение */
+                          double  gGaussianValue      (double, double) ;           /* Нормальное распределение */
 
     public:
 
@@ -297,6 +313,10 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
 #define  _USER_INFO_MESSAGE       904    /* Сообщение не об ошибке */
 #define  _USER_CHECK_MESSAGE      905    /* Сообщение контрольных условий сцены: пересечение, ограничения и прочее */
 #define  _USER_THREAD_MESSAGE     906    /* Сообщение об исполнении потока */
+
+#define  _USER_REFRESH              1
+#define  _USER_LOG                  2 
+
 
 /*-------------------------------------------------------------------*/
 

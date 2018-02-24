@@ -89,9 +89,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  Communications    =NULL ;
  Communications_cnt=  0 ;
 
-       battle_state= 0 ; 
+            Program=NULL ;
 
         ErrorEnable= 1 ;
+
+      x_base=0 ;
+      y_base=0 ;
+      z_base=0 ;
+
 }
 
 
@@ -306,9 +311,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*             Подготовка расчета изменения состояния               */
+/*                  Подготовка обработки событий                    */
 
-     int  Crowd_Object::vCalculateStart(double  t)
+     int  Crowd_Object::vEventStart(void)
 {
   return(0) ;
 }
@@ -316,9 +321,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*                   Расчет изменения состояния                     */
+/*                   Обработка события                              */
 
-     int  Crowd_Object::vCalculate(double t1, double t2, char *callback, int callback_size)
+     int  Crowd_Object::vEvent(long  t, char *type, void  *data, Crowd_Kernel *task)
 {
   return(0) ;
 }
@@ -326,21 +331,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*      Отображение результата расчета изменения состояния          */
+/*            Отображение результата обработки события              */
 
-     int  Crowd_Object::vCalculateShow(void)
+     int  Crowd_Object::vEventShow(void)
 {
   return(0) ;
-}
-
-
-/********************************************************************/
-/*								    */
-/*                        Обработка событий                         */
-
-     int  Crowd_Object::vEvent(char *event_name, double  t)
-{
-  return(-1) ;
 }
 
 
