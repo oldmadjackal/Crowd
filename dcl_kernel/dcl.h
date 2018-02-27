@@ -611,6 +611,10 @@ typedef struct {                               /* ќписание системы подстрок и оп
 				      || (c>='а' && c<='п') \
 				      || (c>='р' && c<='э'))
 
+#define   DIGITS_CHAR(c)  (isdigit(c) || c=='+' || c=='-' \
+				      || c=='e' || c=='E' \
+				      || c=='.'          )
+
 #define     NAME_CHAR(c)  (isalnum(c) || c=='_' || c=='$' \
 						|| c=='#')
 

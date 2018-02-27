@@ -49,11 +49,21 @@
    int  Lang_DCL::iXobject_check(char *beg, char *end, char **ptr)
 
 {
-  for(*ptr=end ; *ptr>=beg ; (*ptr)--)
-         if(           **ptr=='.')  return(1) ;
-    else if(!NAME_CHAR(**ptr)    )  return(0) ;
+  int  check ;
 
-  return(0) ;
+           check=0 ;
+
+  for(*ptr=end ; *ptr>=beg ; (*ptr)--)
+         if(           **ptr=='.') {  check=1 ;  break ;  }
+    else if(!NAME_CHAR(**ptr)    )    break ;
+
+
+  if(check) { 
+                                                        check=0 ; 
+      for( ; beg<=end ; beg++)  if(!DIGITS_CHAR(*beg))  check=1 ;
+            }
+
+  return(check) ;
 }
 
 

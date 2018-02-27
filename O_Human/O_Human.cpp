@@ -1272,6 +1272,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
              char  msg_kind[128] ;
              char  msg_sender[128] ;
              char  obj_color[128] ;
+           double  step ;
 
     Dcl_decl *Human_dcl_Log      (Lang_DCL *,             Dcl_decl **, int) ;    /* Запись в лог */
     Dcl_decl *Human_dcl_ObjectXYZ(Lang_DCL *,             Dcl_decl **, int) ;    /* Выдача координат объекта */
@@ -1291,6 +1292,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 	 {_DGT_VAL,  0,          0, 0, "$ThisX",             &this->x_base,        NULL,   1,   1               },
 	 {_DGT_VAL,  0,          0, 0, "$ThisY",             &this->y_base,        NULL,   1,   1               },
 	 {_DGT_VAL,  0,          0, 0, "$ThisZ",             &this->z_base,        NULL,   1,   1               },
+	 {_DGT_VAL,  0,          0, 0, "$Step",              &step,                NULL,   1,   1               },
  	 {_CHR_PTR, _DCL_CALL,   0, 0, "Log",         (void *)Human_dcl_Log,       "s",    0,   0               },
  	 {_DGT_VAL, _DCL_CALL,   0, 0, "ObjectXYZ",   (void *)Human_dcl_ObjectXYZ, "ss",   0,   0               },
  	 {_DGT_VAL, _DCL_METHOD, 0, 0, "GetLinks",    (void *)Human_dcl_GetLinks,  "ssss", 0,   0               },
@@ -1359,6 +1361,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
            memset(obj_color, 0, sizeof(obj_color)) ;                /* $ObjectColor */ 
           sprintf(obj_color, "%03d:%03d:%03d", (int)GetRValue(*color), (int)GetGValue(*color), (int)GetBValue(*color)) ;
+
+                              step=t ;
 
        for(i=0 ; dcl_human_lib[i].name[0]!=0 ; i++)
          if(dcl_human_lib[i].type     ==_CHR_AREA &&

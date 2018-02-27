@@ -48,6 +48,8 @@ pair link man7 dog call
 
 contact create call man1 man2 Run!
 
+relay state/l Data
+
 relay prepare call 0
 
 time 0.1

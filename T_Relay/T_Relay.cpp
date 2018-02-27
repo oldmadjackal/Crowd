@@ -135,6 +135,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                               int  Crowd_Module_Relay::mStateRegime ;
                              char  Crowd_Module_Relay::mStateFolder[FILENAME_MAX] ;
 
+                             long  Crowd_Module_Relay::mStep ;
 
 /********************************************************************/
 /*								    */
@@ -242,6 +243,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                         }                 
 
                                       }
+/*------------------------------ Получение номера шага моделирования */
+
+   if(!stricmp(action, "GET_STEP")) {
+
+                       (*(double *)object)=mStep ;
+
+                                    }
 /*-------------------------------------------------------------------*/
 
 
@@ -597,7 +605,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 {
             int  debug_flag ;
-            int  step ;
    Crowd_Object *object ;
   Crowd_Message  init_msg ;
             int  status ;
@@ -648,7 +655,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
        if(debug_flag)  this->debug_next=_CROWD_KERNEL_WAIT_STEP ;
        else            this->debug_next=    0 ;
 
-   for(step=0 ; ; ) {
+   for(mStep=0 ; ; ) {
 
            if(this->debug_stop)  break ;                            /* Если внешнее прерывание... */
 
@@ -660,9 +667,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                       this->debug_next=_CROWD_KERNEL_WAIT_STEP ;
                                                          }
 
-                        step++ ;
+                        mStep++ ;
 
-                          sprintf(text, "=== Step %d  -  %d messages", step, this->mQueue[0].cnt) ; 
+                          sprintf(text, "=== Step %d  -  %d messages", mStep, this->mQueue[0].cnt) ; 
        if(mDebugDlg)  SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)text) ;
 
 /*----------------------------------------------- Временная разрядка */
@@ -693,7 +700,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                       SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)text) ;
                        }
 
-            status=object->vEvent(step, "MESSAGE", (void *)QUEUE[n], this) ;
+            status=object->vEvent(mStep, "MESSAGE", (void *)QUEUE[n], this) ;
          if(status)  break ;
 
                    object->vEventShow() ;
@@ -732,7 +739,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             if(exit_flag)  break ;
 
 /*----------------------------------------------------- Главный цикл */
-                    }
+                     }
 
          if(mDebugDlg) {
                           sprintf(text, "=== Exit") ; 

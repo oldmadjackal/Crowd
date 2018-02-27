@@ -45,6 +45,8 @@
 #define                                      _LOG_STATE   2              /* Сохранение в памяти и в файлах - только на просмотр */
      static                       char  mStateFolder[FILENAME_MAX] ;    /* Папка файлов состояний объектов */
 
+     static                       long  mStep ;                         /* Номер шага моделирования */
+
     public:
      virtual         int  vGetParameter (char *, char *)   ;            /* Получить параметр */
      virtual         int  vExecuteCmd   (const char *) ;                /* Выполнить команду */
