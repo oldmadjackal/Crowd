@@ -39,6 +39,12 @@
      static                       HWND  mQueueDlg ;                     /* Окно отображения состояния очереди */
      static                       HWND  mDebugDlg ;                     /* Окно отладки */
 
+     static                        int  mStateRegime ;                  /* Способ сохранения состояния объектов */
+#define                                   _MEMORY_STATE   0              /* Сохранение в памяти */
+#define                                     _FILE_STATE   1              /* Сохранение в файлах */
+#define                                      _LOG_STATE   2              /* Сохранение в памяти и в файлах - только на просмотр */
+     static                       char  mStateFolder[FILENAME_MAX] ;    /* Папка файлов состояний объектов */
+
     public:
      virtual         int  vGetParameter (char *, char *)   ;            /* Получить параметр */
      virtual         int  vExecuteCmd   (const char *) ;                /* Выполнить команду */
@@ -48,6 +54,7 @@
 
     public:
                      int  cHelp         (char *, Crowd_IFace *) ;       /* Инструкция HELP */
+                     int  cState        (char *, Crowd_IFace *) ;       /* Инструкция STATE */
                      int  cPrepare      (char *, Crowd_IFace *) ;       /* Инструкция PREPARE */
                      int  cQueue        (char *, Crowd_IFace *) ;       /* Инструкция QUEUE */
                      int  cDebug        (char *, Crowd_IFace *) ;       /* Инструкция DEBUG */

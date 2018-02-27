@@ -90,6 +90,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  Communications_cnt=  0 ;
 
             Program=NULL ;
+              State=NULL ;
 
         ErrorEnable= 1 ;
 
@@ -109,6 +110,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 {
     int  i ;
 
+/*---------------------------------------------- Освобождение памяти */
+
+       if(State!=NULL) {
+                           free(State) ;
+                                State=NULL ;
+                       }
 /*--------------------------------------------- Удаление компонентов */
 
    for(i=0 ; i<this->Units.List_cnt ; i++)

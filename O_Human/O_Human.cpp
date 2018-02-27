@@ -1278,6 +1278,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     Dcl_decl *Human_dcl_GetLinks (Lang_DCL *, Dcl_decl *, Dcl_decl **, int) ;    /* Получение списка связей */
     Dcl_decl *Human_dcl_SendMsg  (Lang_DCL *,             Dcl_decl **, int) ;    /* Отправка сообщения */
     Dcl_decl *Human_dcl_Recall   (Lang_DCL *,             Dcl_decl **, int) ;    /* Самовызов объекта */
+    Dcl_decl *Human_dcl_StateSave(Lang_DCL *, Dcl_decl *, Dcl_decl **, int) ;    /* Сохранение состояния объекта */
+    Dcl_decl *Human_dcl_StateRead(Lang_DCL *, Dcl_decl *, Dcl_decl **, int) ;    /* Считывание состояния объекта */
 
     Dcl_decl  dcl_human_lib[]={
          {0, 0, 0, 0, "$PassiveData$", NULL, "human", 0, 0},
@@ -1294,6 +1296,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  	 {_DGT_VAL, _DCL_METHOD, 0, 0, "GetLinks",    (void *)Human_dcl_GetLinks,  "ssss", 0,   0               },
  	 {_DGT_VAL, _DCL_CALL,   0, 0, "SendMessage", (void *)Human_dcl_SendMsg,   "ssss", 0,   0               },
  	 {_DGT_VAL, _DCL_CALL,   0, 0, "Recall",      (void *)Human_dcl_Recall,    "s",    0,   0               },
+ 	 {_DGT_VAL, _DCL_METHOD, 0, 0, "StateSave",   (void *)Human_dcl_StateSave, "",     0,   0               },
+ 	 {_DGT_VAL, _DCL_METHOD, 0, 0, "StateRead",   (void *)Human_dcl_StateRead, "",     0,   0               },
 	 {0, 0, 0, 0, "", NULL, NULL, 0, 0}
                               } ;
 
@@ -1779,11 +1783,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 {
           char  kind[128] ;
         double  wait ;
-  Crowd_Kernel *msg_module ;
  Crowd_Message *message ;
-  Crowd_Object *receiver ;
            int  status ;
-           int  i ;
 
  static   double  dgt_value ;          /* Буфер числового значения */
  static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
@@ -1829,6 +1830,211 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
   return(&dgt_return) ;
 
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*                  Сохранение статуса объекта                       */
+
+   Dcl_decl *Human_dcl_StateSave(Lang_DCL  *dcl_kernel,
+                                 Dcl_decl  *source, 
+                                 Dcl_decl **pars, 
+                                      int   pars_cnt)
+
+{
+  Dcl_complex_record *record ;
+                 int  type ;          /* Основной тип переменной */
+                 int  status ;
+                char  tmp[1024] ;
+                 int  i ;
+                 int  k ;
+
+        static  char *buff ;
+#define                _BUFF_SIZE  64000
+
+ static   double  dgt_value ;          /* Буфер числового значения */
+ static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
+
+/*---------------------------------------------------- Инициализация */
+
+     if(buff==NULL)  buff=(char *)calloc(1, _BUFF_SIZE) ;
+     if(buff==NULL) {
+                       dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                strcpy(dcl_kernel->mError_details, "Memory over") ;
+                            return(&dgt_return) ;
+                    }
+   
+                              dgt_value=0 ;
+
+/*-------------------------------------------------- Упаковка данных */
+
+                          *buff=0 ;
+
+     for(record=(Dcl_complex_record *)source->addr,                 /* LOOP - Перебираем записи */
+                        i=0 ; i<source->buff ; i++, 
+         record=(Dcl_complex_record *)record->next_record) {
+
+          for(k=0 ; k<record->elems_cnt ; k++) {                    /* LOOP - Перебираем элементы */
+
+               type=t_base(record->elems[k].type) ;                 /* Извлекаем тип элемента */ 
+            if(type==_CHR_AREA ||                                   /* Если строчная переменная */
+               type==_CHR_PTR    ) {
+                                      strcat(buff, (char *)record->elems[k].addr) ;
+                                   }
+            else                   {                                /* Если числовая переменная */
+
+                       dcl_kernel->iNumToStr(&record->elems[k], tmp) ;
+                                      strcat(buff, tmp) ;
+                                   }
+
+                                      strcat(buff, ";") ;
+ 
+                                               }                    /* ENDLOOP - Перебираем элементы */
+
+                                      strcat(buff, "\n") ;          /* Переводим строку */ 
+                                                           }
+
+/*------------------------------------------------ Сохранение данных */
+
+      status=EventTask->vSpecial("SAVE_STATE", EventObject, buff) ;
+   if(status) {
+                       dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                strcpy(dcl_kernel->mError_details, "State saving error") ;
+                            return(&dgt_return) ;
+              }
+/*-------------------------------------------------------------------*/
+
+#undef   _BUFF_SIZE
+
+  return(&dgt_return) ;
+}
+
+
+/*********************************************************************/
+/*                                                                   */
+/*                  Считывание статуса объекта                       */
+
+   Dcl_decl *Human_dcl_StateRead(Lang_DCL  *dcl_kernel,
+                                 Dcl_decl  *source, 
+                                 Dcl_decl **pars, 
+                                      int   pars_cnt)
+
+{
+#define    _BUFF_SIZE  64000
+#define  _VALUES_MAX     100
+
+  Dcl_complex_record *record ;
+                 int  type ;          /* Основной тип переменной */
+                 int  status ;
+                char *work ;
+                char *next ;
+                char *end ;
+              double  value ;
+                 int  i ;
+                 int  k ;
+
+    static      char *buff ;
+    static  Dcl_decl *values ;
+              double  digits[_VALUES_MAX] ;
+
+ static   double  dgt_value ;          /* Буфер числового значения */
+ static Dcl_decl  dgt_return={ _DGT_VAL, 0,0,0,"", &dgt_value, NULL, 1, 1} ;
+
+/*---------------------------------------------------- Инициализация */
+
+     if(buff==NULL  )  buff=(char *)calloc(1, _BUFF_SIZE) ;
+     if(buff==NULL  ) {
+                       dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                strcpy(dcl_kernel->mError_details, "Memory over") ;
+                            return(&dgt_return) ;
+                      }
+
+     if(values==NULL)  values=(Dcl_decl *)calloc(_VALUES_MAX, sizeof(*values)) ;
+     if(values==NULL) {
+                       dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                strcpy(dcl_kernel->mError_details, "Memory over") ;
+                            return(&dgt_return) ;
+                      }
+   
+                              dgt_value=0 ;
+
+/*------------------------------------------------ Считывание данных */
+
+      status=EventTask->vSpecial("READ_STATE", EventObject, buff) ;
+   if(status) {
+                       dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                strcpy(dcl_kernel->mError_details, "State reading error") ;
+                            return(&dgt_return) ;
+              }
+/*------------------------------------------------ Распаковка данных */
+
+     if(*buff==0) {                                                 /* Если данных нет - оставяем исходную запись */
+                              dgt_value=1 ;
+                      return(&dgt_return) ;
+                  } 
+
+              dcl_kernel->iXobject_clear(source) ;                  /* Очищаем структуру состояний */
+
+   for(work=buff, next=buff, i=0 ; ; work=next+1, i++) {            /* LOOP - Перебор строк */
+
+             next=strchr(work, '\n') ;
+          if(next==NULL)  break ;
+            *next=0 ;
+
+               dcl_kernel->iXobject_add(source, NULL) ;
+/*- - - - - - - - - - - - - - - - - - -  Подготовка списка элементов */
+     if(i==0) {
+                    record=(Dcl_complex_record *)source->addr ;
+        for(k=0 ; k<record->elems_cnt ; k++)  values[k]=record->elems[k] ;
+              }
+/*- - - - - - - - - - - - - - - - - - - Разбор строки на компоненты */
+      for(k=0 ; k<_VALUES_MAX ; work=end+1, k++) {
+
+             end=strchr(work, ';') ;
+          if(end==NULL)  break ;
+            *end=0 ;
+
+               values[k].addr=work ;
+                                                 }
+
+     if(k>=_VALUES_MAX) {
+                          dcl_kernel->mError_code=_DCLE_USER_DEFINED ;
+                   strcpy(dcl_kernel->mError_details, "Too many elements in State") ;
+                               return(&dgt_return) ;
+                        }
+/*- - - - - - - - - - - - - - -  Преобразование числовых компонентов */
+      for(k=0 ; k<record->elems_cnt ; k++) {
+
+               type=t_base(record->elems[k].type) ;                 /* Извлекаем тип элемента */ 
+            if(type!=_CHR_AREA &&                                   /* Если числовая переменная */
+               type!=_CHR_PTR    ) {
+
+                          value=strtod((char *)values[k].addr, &end) ;
+
+                  dcl_kernel->iDgt_set(value, &digits[k], values[k].type) ;
+                                       values[k].addr=&digits[k] ;
+                                   }
+
+                                           }                                    
+/*- - - - - - - - - - - - - - - - - - - - - - -  Формирование записи */
+        status=dcl_kernel->iXobject_set(source, values, record->elems_cnt) ;
+     if(status) {
+                    dcl_kernel->mError_code=_DCLE_TYPEDEF_ELEM ;
+                      return(&dgt_return) ; 
+                }
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                                       }            /* END LOOP - Перебор строк */
+
+
+    
+
+
+/*-------------------------------------------------------------------*/
+
+#undef   _BUFF_SIZE
+
+  return(&dgt_return) ;
 }
 
 

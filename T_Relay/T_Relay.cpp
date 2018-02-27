@@ -100,6 +100,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  { "help",       "?",  "#HELP (?) - список доступных команд", 
                         NULL,
                        &Crowd_Module_Relay::cHelp   },
+ { "state",      "p",  "#STATE (S) - задание режима хранения состояний объектов", 
+                        "STATE/M - хранение в памяти\n "
+                        "STATE/F <путь> - хранение в файлах в указанной папке"
+                        "STATE/L <путь> - хранение в памяти и файлах - только для просмотра",
+                       &Crowd_Module_Relay::cState    },
  { "prepare",    "p",  "#PREPARE (P) - подготовка стартовой сцены", 
                         "PREPARE <имя сообщения> <временная зона> - поместить сообщение в очередь",
                        &Crowd_Module_Relay::cPrepare    },
@@ -126,6 +131,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
                              HWND  Crowd_Module_Relay::mQueueDlg ;
                              HWND  Crowd_Module_Relay::mDebugDlg ;
+
+                              int  Crowd_Module_Relay::mStateRegime ;
+                             char  Crowd_Module_Relay::mStateFolder[FILENAME_MAX] ;
 
 
 /********************************************************************/
@@ -179,6 +187,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
   int  Crowd_Module_Relay::vSpecial(char *action, void *object, char *details)
 
 {
+  Crowd_Object *obj ;
+          char  path[FILENAME_MAX] ;
+          FILE *file ;
+
 /*------------------------------------------- Запись сообщения в лог */
 
    if(!stricmp(action, "LOG")) {
@@ -186,6 +198,50 @@ BOOL APIENTRY DllMain( HANDLE hModule,
          if(mDebugDlg)  SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)object) ;
 
                                }
+/*------------------------------ Запись/считывание состояния объекта */
+
+   if(!stricmp(action, "SAVE_STATE")) {
+
+                       obj=(Crowd_Object *)object ;
+
+     if(mStateRegime==_MEMORY_STATE ||
+        mStateRegime==   _LOG_STATE   ) {
+                  obj->State=(char *)realloc(obj->State, strlen(details)+8) ;
+           strcpy(obj->State, details) ;
+                                        }
+     if(mStateRegime==  _FILE_STATE ||
+        mStateRegime==   _LOG_STATE   ) {
+
+                sprintf(path, "%s\\%s.state", mStateFolder, obj->Name) ;
+             file=fopen(path, "wb") ;
+          if(file==NULL)  return(-1) ;
+
+                 fwrite(details, 1, strlen(details), file) ;
+                 fclose(file) ;
+                                        }                 
+                                      }
+
+   if(!stricmp(action, "READ_STATE")) {
+
+                       obj=(Crowd_Object *)object ;
+
+     if(mStateRegime==_MEMORY_STATE ||
+        mStateRegime==   _LOG_STATE   ) {
+
+           if(obj->State!=NULL)  strcpy(details, obj->State) ;
+           else                  strcpy(details, "") ;
+                                        }
+     if(mStateRegime==  _FILE_STATE   ) {
+
+                sprintf(path, "%s\\%s.state", mStateFolder, obj->Name) ;
+             file=fopen(path, "rb") ;
+          if(file==NULL)  return(-1) ;
+
+                  fread(details, 1, 64000, file) ;
+                 fclose(file) ;
+                                        }                 
+
+                                      }
 /*-------------------------------------------------------------------*/
 
 
@@ -353,6 +409,80 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
+/*		      Реализация инструкции STATE                   */
+/*								    */
+/*      STATE/M                                                     */
+/*      STATE/F <путь>                                              */
+/*      STATE/L <путь>                                              */
+
+  int  Crowd_Module_Relay::cState(char *cmd, Crowd_IFace *iface)
+
+{
+#define   _PARS_MAX  10
+
+            char *pars[_PARS_MAX] ;
+            char *end ;
+             int  i ;
+
+/*---------------------------------------- Разборка командной строки */
+/*- - - - - - - - - - - - - - - - - - -  Выделение ключей управления */
+       if(*cmd=='/') {
+ 
+                if(*cmd=='/')  cmd++ ;
+
+                   end=strchr(cmd, ' ') ;
+                if(end!=NULL)  *end=0 ;
+                
+                if(strchr(cmd, 'm')!=NULL ||
+                   strchr(cmd, 'M')!=NULL   ) mStateRegime=_MEMORY_STATE ;
+                if(strchr(cmd, 'f')!=NULL ||
+                   strchr(cmd, 'F')!=NULL   ) mStateRegime=  _FILE_STATE ;
+                if(strchr(cmd, 'l')!=NULL ||
+                   strchr(cmd, 'L')!=NULL   ) mStateRegime=   _LOG_STATE ;
+
+                if(end!=NULL)  cmd=end+1 ;
+                else           cmd= "" ;
+                     }
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+      if(pars[0]!=NULL)
+       if(*pars[0]!=0)  strcpy(mStateFolder, pars[0]) ;
+
+/*---------------------------------------- Контроль папки сохранения */
+  
+    if(mStateRegime==_FILE_STATE ||
+       mStateRegime== _LOG_STATE   ) {
+
+     if(mStateFolder[0]==0) {
+                      SEND_ERROR("Не задан путь папки сохранения состояний объектов") ;
+                                     return(-1) ;
+                            }
+
+     if(access(mStateFolder, 0x00)) {
+                      SEND_ERROR("Указанная папка сохранения состояний объектов не существует") ;
+                                     return(-1) ;
+                                    }
+
+                                     }
+/*-------------------------------------------------------------------*/
+
+#undef   _PARS_MAX    
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
 /*		      Реализация инструкции PREPARE                 */
 /*								    */
 /*      PREPARE <имя сообщения> <временная зона>                    */
@@ -466,16 +596,16 @@ BOOL APIENTRY DllMain( HANDLE hModule,
   int  Crowd_Module_Relay::cRun(char *cmd, Crowd_IFace *iface)
 
 {
-           int  debug_flag ;
-           int  step ;
-  Crowd_Object *object ;
-           int  status ;
-          char  decl[1024] ;
-          char  text[1024] ;
-           int  exit_flag ;
-          char *end ;
-           int  n ;
-           int  i ;
+            int  debug_flag ;
+            int  step ;
+   Crowd_Object *object ;
+  Crowd_Message  init_msg ;
+            int  status ;
+           char  decl[1024] ;
+           char  text[1024] ;
+            int  exit_flag ;
+            int  n ;
+            int  i ;
 
 #define   OBJECTS       Crowd_Kernel::kernel->kernel_objects
 #define   OBJECTS_CNT   Crowd_Kernel::kernel->kernel_objects_cnt
@@ -507,12 +637,18 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
      for(i=0 ; i<OBJECTS_CNT ; i++)  OBJECTS[i]->vEventStart() ;
 
+                 init_msg.Object_s=NULL ;
+          strcpy(init_msg.Type, "system") ;
+          strcpy(init_msg.Kind, "initialisation") ;
+
+     for(i=0 ; i<OBJECTS_CNT ; i++)  OBJECTS[i]->vEvent(0, "MESSAGE", (void *)&init_msg, this) ;
+
 /*----------------------------------------------------- Главный цикл */
 
        if(debug_flag)  this->debug_next=_CROWD_KERNEL_WAIT_STEP ;
        else            this->debug_next=    0 ;
 
-   for(step=0 ; ; step++) {
+   for(step=0 ; ; ) {
 
            if(this->debug_stop)  break ;                            /* Если внешнее прерывание... */
 
@@ -523,6 +659,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
            if(this->debug_next==_CROWD_KERNEL_NEXT_STEP) {
                       this->debug_next=_CROWD_KERNEL_WAIT_STEP ;
                                                          }
+
+                        step++ ;
 
                           sprintf(text, "=== Step %d  -  %d messages", step, this->mQueue[0].cnt) ; 
        if(mDebugDlg)  SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)text) ;
@@ -594,7 +732,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             if(exit_flag)  break ;
 
 /*----------------------------------------------------- Главный цикл */
-                          }
+                    }
 
          if(mDebugDlg) {
                           sprintf(text, "=== Exit") ; 

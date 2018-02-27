@@ -192,6 +192,7 @@
             Dcl_decl *field ;
                 char *name ;
                  int  append_flag ;
+                 int  type ;
                  int  size ;
                  int  i ;
                  int  j ;
@@ -227,7 +228,17 @@
     
          if(j>=record->elems_cnt)  return(-1) ;                     /* Если такого поля нет... */
 
-                                    size=values[i].size ;
+          type=t_base(field->type) ;                                /* Извлекаем тип элемента */ 
+       if(type!=_CHR_AREA &&                                        /* Если числовая переменная... */
+          type!=_CHR_PTR    ) {
+
+                          size=values[i].size*iDgt_size(field->type) ;
+                  memcpy(field->addr, values[i].addr, size) ;       /*  Занесение данных */
+
+                              }
+       else                   {                                     /* Если строчная переменная... */
+
+                                   size=values[i].size ;
 
          if(append_flag) {                                          /* Если добавление значения к существующему... */
                 if(field->size+size>field->buff)                    /*  Контроль переполнения буфера значения */
@@ -244,6 +255,8 @@
                      memcpy(field->addr, values[i].addr, size) ;    /*  Занесение данных */
                             field->size=size ;
                          }
+                              }
+
                                    }
                     }
 /*-------------------------------------------------------------------*/
