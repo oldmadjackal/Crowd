@@ -12,6 +12,8 @@
 
 #include "UserDlg.h"
 
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4267)
 #pragma warning(disable : 4996)
 
    void  UDi_area_2D_init      (HDC, UD_area_data *, UD_metrics *) ;

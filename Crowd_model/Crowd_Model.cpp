@@ -5,6 +5,8 @@
 
 #include "Crowd_model.h"
 
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4267)
 #pragma warning(disable : 4996)
 
 
@@ -34,7 +36,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                        char *types                )
 
 {
-                 int  group ;                   /* Дескриптор поисковой группы файлов */
+            intptr_t  group ;                   /* Дескриптор поисковой группы файлов */
   struct _finddata_t  file_info ;
                 char  mask[FILENAME_MAX] ;
                 char  path[FILENAME_MAX] ;
@@ -150,7 +152,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
            file=fopen(data->path, "rt") ;                            /* Открываем файл */
         if(file==NULL) {
-                            sprintf(text, "File open error: ", data->path) ;
+                            sprintf(text, "File open error: %s", data->path) ;
                          MessageBox(NULL, text, "Считывание модели", 0) ;
                            return(-1) ;
                        }
@@ -250,7 +252,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
            file=fopen(data->path, "rt") ;                            /* Открываем файл */
         if(file==NULL) {
-                            sprintf(text, "File open error: ", data->path) ;
+                            sprintf(text, "File open error: %s", data->path) ;
                          MessageBox(NULL, text, "Считывание модели", 0) ;
                            return(-1) ;
                        }

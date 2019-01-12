@@ -96,4 +96,4 @@
 /* Τΰιλ  F_Pair.cpp */
 
 /* Τΰιλ  F_Pair_dialog.cpp */
-  BOOL CALLBACK  Communication_Pair_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Communication_Pair_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;

@@ -77,4 +77,4 @@
 /* Τΰιλ  M_Contact.cpp */
 
 /* Τΰιλ  M_Contact_dialog.cpp */
-  BOOL CALLBACK  Message_Contact_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Message_Contact_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;

@@ -94,12 +94,12 @@
      void  iDebug                     (char *, char *) ;
 
 /* CrowdRoot_dialog.cpp */
-    BOOL CALLBACK  Main_Help_dialog        (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна HELP */
-    BOOL CALLBACK  Main_ObjectsList_dialog (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна OBJECTS LIST */
-    BOOL CALLBACK  Main_MessagesList_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна MESSAGES LIST */
+  INT_PTR CALLBACK  Main_Help_dialog        (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна HELP */
+  INT_PTR CALLBACK  Main_ObjectsList_dialog (HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна OBJECTS LIST */
+  INT_PTR CALLBACK  Main_MessagesList_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна MESSAGES LIST */
 
 /* CrowdRoot_monitor.cpp */
-      int  CrowdRoot_threads(char *, char *) ;      /* Мониторинг рабочих потоков */ 
-      int  CrowdRoot_modules(char *) ;              /* Отображение списка присоединенных модулей */ 
-    BOOL CALLBACK  Main_Threads_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна THREADS */
-    BOOL CALLBACK  Main_Modules_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна MODULES */
+      int            CrowdRoot_threads  (char *, char *) ;               /* Мониторинг рабочих потоков */ 
+      int            CrowdRoot_modules  (char *) ;                       /* Отображение списка присоединенных модулей */ 
+  INT_PTR  CALLBACK  Main_Threads_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна THREADS */
+  INT_PTR  CALLBACK  Main_Modules_dialog(HWND, UINT, WPARAM, LPARAM) ;   /* Обработчик окна MODULES */

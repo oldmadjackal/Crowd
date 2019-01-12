@@ -19,6 +19,7 @@
 
 #include "T_Relay.h"
 
+#pragma warning(disable : 4244)
 #pragma warning(disable : 4996)
 
 
@@ -38,8 +39,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна HELP	             */
 
-    BOOL CALLBACK  Task_Relay_Help_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                  WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Task_Relay_Help_dialog(  HWND hDlg,     UINT Msg, 
+                                           WPARAM wParam, LPARAM lParam) 
 {
   Crowd_Module_Relay  Module ;
                  int  elm ;         /* Идентификатор элемента диалога */
@@ -139,8 +140,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна QUEUE             */
 
-    BOOL CALLBACK  Task_Relay_Queue_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                   WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Task_Relay_Queue_dialog(  HWND hDlg,     UINT Msg, 
+                                            WPARAM wParam, LPARAM lParam) 
 {
   Crowd_Module_Relay  Module ;
        static  HFONT  font ;         /* Шрифт */
@@ -281,8 +282,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна DEBUG             */
 
-    BOOL CALLBACK  Task_Relay_Debug_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                   WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Task_Relay_Debug_dialog(  HWND hDlg,     UINT Msg, 
+                                            WPARAM wParam, LPARAM lParam) 
 {
   Crowd_Module_Relay  Module ;
        static  HFONT  font ;         /* Шрифт */

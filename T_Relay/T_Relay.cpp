@@ -4,7 +4,6 @@
 /*								    */
 /********************************************************************/
 
-#pragma warning( disable : 4996 )
 #define  stricmp  _stricmp
 
 #include <windows.h>
@@ -26,6 +25,10 @@
 #include "..\Crowd_Kernel\Crowd_Kernel.h"
 
 #include "T_Relay.h"
+
+
+#pragma warning( disable : 4244 )
+#pragma warning( disable : 4996 )
 
 
 #define  _SECTION_FULL_NAME   "RELAY"

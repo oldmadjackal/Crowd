@@ -20,6 +20,7 @@
 
 #include "resource.h"
 
+#pragma warning(disable : 4244)
 #pragma warning(disable : 4996)
 
 
@@ -112,8 +113,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна THREADS           */
 
-    BOOL CALLBACK  Main_Threads_dialog(  HWND hDlg,     UINT Msg, 
- 		                       WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Main_Threads_dialog(  HWND hDlg,     UINT Msg, 
+                                        WPARAM wParam, LPARAM lParam) 
 {
     WorkThread *thread_data ;
          DWORD  thread_id ;
@@ -241,8 +242,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна MODULES           */
 
-    BOOL CALLBACK  Main_Modules_dialog(  HWND hDlg,     UINT Msg, 
- 		                       WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Main_Modules_dialog(  HWND hDlg,     UINT Msg, 
+                                        WPARAM wParam, LPARAM lParam) 
 {
       static  HFONT  font ;        /* Шрифт */
  class Crowd_Kernel *entry ;

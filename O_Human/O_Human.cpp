@@ -24,6 +24,8 @@
 
 #include "O_Human.h"
 
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4267)
 #pragma warning(disable : 4996)
 
 #define  SEND_ERROR(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \

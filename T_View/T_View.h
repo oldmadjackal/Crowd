@@ -53,4 +53,4 @@
 /* Τΰιλ  T_View.cpp */
 
 /* Τΰιλ  T_View_dialog.cpp */
-    BOOL CALLBACK  Task_View_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;
+   INT_PTR CALLBACK  Task_View_Help_dialog(HWND, UINT, WPARAM, LPARAM) ;

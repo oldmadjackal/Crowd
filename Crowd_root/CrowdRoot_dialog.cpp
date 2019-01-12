@@ -18,6 +18,7 @@
 
 #include "CrowdRoot.h"
 
+#pragma warning(disable : 4244)
 #pragma warning(disable : 4996)
 
 
@@ -32,8 +33,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна HELP	             */
 
-    BOOL CALLBACK  Main_Help_dialog(  HWND hDlg,     UINT Msg, 
- 		                    WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Main_Help_dialog(  HWND hDlg,     UINT Msg, 
+                                     WPARAM wParam, LPARAM lParam) 
 {
   Crowd_Module_Main  Module ;
                 int  elm ;         /* Идентификатор элемента диалога */
@@ -145,8 +146,8 @@
 /*								     */
 /*         Обработчик сообщений диалогового окна OBJECTS LIST        */
 
-    BOOL CALLBACK  Main_ObjectsList_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                   WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Main_ObjectsList_dialog(  HWND hDlg,     UINT Msg, 
+                                            WPARAM wParam, LPARAM lParam) 
 {
   static HWND  hWnd_active_prv ;
           int  elm ;               /* Идентификатор элемента диалога */
@@ -247,8 +248,8 @@
 /*								     */
 /*         Обработчик сообщений диалогового окна MESSAGES LIST       */
 
-    BOOL CALLBACK  Main_MessagesList_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                    WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Main_MessagesList_dialog(  HWND hDlg,     UINT Msg, 
+                                             WPARAM wParam, LPARAM lParam) 
 {
   static HWND  hWnd_active_prv ;
           int  elm ;               /* Идентификатор элемента диалога */

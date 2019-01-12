@@ -25,6 +25,7 @@
 
 #include "F_Show.h"
 
+#pragma warning(disable : 4267)
 #pragma warning(disable : 4996)
 
 #define  SEND_ERROR(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \

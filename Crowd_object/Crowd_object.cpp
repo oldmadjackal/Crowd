@@ -9,6 +9,7 @@
 #include "..\Crowd_feature\Crowd_feature.h"
 #include "Crowd_object.h"
 
+#pragma warning(disable : 4267)
 #pragma warning(disable : 4996)
 
 

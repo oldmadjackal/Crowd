@@ -19,7 +19,8 @@
 
 #include "T_View.h"
 
-#pragma warning(disable : 4996)
+#pragma warning( disable : 4244 )
+#pragma warning( disable : 4996 )
 
 
 #define  SEND_ERROR(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
@@ -38,8 +39,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна HELP	             */
 
-    BOOL CALLBACK  Task_View_Help_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                 WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Task_View_Help_dialog(  HWND hDlg,     UINT Msg, 
+                                          WPARAM wParam, LPARAM lParam) 
 {
    Crowd_Module_View  Module ;
                  int  elm ;         /* Идентификатор элемента диалога */

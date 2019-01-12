@@ -85,6 +85,6 @@
 /* Τΰιλ  T_Relay.cpp */
 
 /* Τΰιλ  T_Relay_dialog.cpp */
-    BOOL CALLBACK  Task_Relay_Help_dialog (HWND, UINT, WPARAM, LPARAM) ;
-    BOOL CALLBACK  Task_Relay_Queue_dialog(HWND, UINT, WPARAM, LPARAM) ;
-    BOOL CALLBACK  Task_Relay_Debug_dialog(HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Task_Relay_Help_dialog (HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Task_Relay_Queue_dialog(HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Task_Relay_Debug_dialog(HWND, UINT, WPARAM, LPARAM) ;

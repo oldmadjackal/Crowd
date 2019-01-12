@@ -81,5 +81,5 @@
 /* Τΰιλ  O_Human.cpp */
 
 /* Τΰιλ  O_Human_dialog.cpp */
-  BOOL CALLBACK  Object_Human_Help_dialog  (HWND, UINT, WPARAM, LPARAM) ;
-  BOOL CALLBACK  Object_Human_Create_dialog(HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Object_Human_Help_dialog  (HWND, UINT, WPARAM, LPARAM) ;
+  INT_PTR CALLBACK  Object_Human_Create_dialog(HWND, UINT, WPARAM, LPARAM) ;

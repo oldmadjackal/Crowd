@@ -18,6 +18,7 @@
 
 #include "M_Contact.h"
 
+#pragma warning(disable : 4244)
 #pragma warning(disable : 4996)
 
 #define  SEND_ERROR(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
@@ -31,8 +32,8 @@
 /*								     */
 /* 	     Обработчик сообщений диалогового окна HELP	             */
 
-    BOOL CALLBACK  Message_Contact_Help_dialog(  HWND hDlg,     UINT Msg, 
- 		  	                       WPARAM wParam, LPARAM lParam) 
+  INT_PTR CALLBACK  Message_Contact_Help_dialog(  HWND hDlg,     UINT Msg, 
+                                                WPARAM wParam, LPARAM lParam) 
 {
   Crowd_Module_Contact  Module ;
                    int  elm ;         /* Идентификатор элемента диалога */

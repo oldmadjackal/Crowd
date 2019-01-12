@@ -27,8 +27,9 @@
 
 //#include "Controls.h"
 
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4267)
 #pragma warning(disable : 4996)
-
 
 /*--------------------------------------------- Системные переменные */
 
@@ -66,8 +67,8 @@
 /*------------------------------------ Обработчики элементов диалога */
 
   union WndProc_par {
-                        long            par ;
-                     LRESULT (CALLBACK *call)(HWND, UINT, WPARAM, LPARAM) ; 
+                      LONG_PTR            par ;
+                       LRESULT (CALLBACK *call)(HWND, UINT, WPARAM, LPARAM) ; 
                     } ;
 
   static union WndProc_par  Cmd_WndProc ;
@@ -78,9 +79,9 @@
 /*------------------------------------ Процедуры обработки сообщений */
 
    LRESULT CALLBACK  CrowdRoot_window_processor(HWND, UINT, WPARAM, LPARAM) ;
-      BOOL CALLBACK  CrowdRoot_main_dialog     (HWND, UINT, WPARAM, LPARAM) ;
+   INT_PTR CALLBACK  CrowdRoot_main_dialog     (HWND, UINT, WPARAM, LPARAM) ;
 
-      UINT CALLBACK  iCrowdRoot_read_HookProc  (HWND, UINT, WPARAM, LPARAM) ;
+  UINT_PTR CALLBACK  iCrowdRoot_read_HookProc  (HWND, UINT, WPARAM, LPARAM) ;
 
 
 /*********************************************************************/
@@ -314,8 +315,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 /*								     */
 /*	   Обработчик сообщений диалогового окна VIEW	             */	
 
-    BOOL CALLBACK  CrowdRoot_main_dialog(  HWND  hDlg,     UINT  Msg, 
- 			                 WPARAM  wParam, LPARAM  lParam) 
+  INT_PTR CALLBACK  CrowdRoot_main_dialog(  HWND  hDlg,     UINT  Msg, 
+                                          WPARAM  wParam, LPARAM  lParam) 
 {
                  HWND  hPrn ;
                  RECT  wr ;      /* Габарит окна */
@@ -434,9 +435,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                                  wr.bottom-wr.top+1, true) ;
 /*- - - - - - - - - - - - - - - - -  Перехват обработчиков сообщений */
        Tmp_WndProc.call=CrowdRoot_Cmd_WndProc ;
-       Cmd_WndProc.par =GetWindowLong(ITEM(IDC_COMMAND), GWL_WNDPROC) ;
-                        SetWindowLong(ITEM(IDC_COMMAND), GWL_WNDPROC,
-                                                   Tmp_WndProc.par) ;
+       Cmd_WndProc.par =GetWindowLongPtr(ITEM(IDC_COMMAND), GWLP_WNDPROC) ;
+                        SetWindowLongPtr(ITEM(IDC_COMMAND), GWLP_WNDPROC,
+                                                            Tmp_WndProc.par) ;
 /*- - - - - - - - - - - - - - - - - - - - - - - - -  Пропись шрифтов */
                 font=CreateFont(14, 7, 0, 0, FW_THIN, 
                                  false, false, false,
@@ -2750,8 +2751,8 @@ typedef  struct {
 }
 
 
-  UINT CALLBACK  iCrowdRoot_read_HookProc(  HWND hDlg,     UINT uiMsg, 
-                                          WPARAM wParam, LPARAM lParam )
+  UINT_PTR CALLBACK  iCrowdRoot_read_HookProc(  HWND hDlg,     UINT uiMsg, 
+                                              WPARAM wParam, LPARAM lParam )
 {
    if(uiMsg==WM_INITDIALOG) {
       SetWindowPos(hDlg, HWND_TOPMOST, 0, 0, 0, 0,
