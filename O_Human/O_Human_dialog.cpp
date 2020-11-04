@@ -341,3 +341,157 @@
 }
 
 
+/*********************************************************************/
+/*								     */
+/* 	     Обработчик сообщений диалогового окна PROFILE	             */
+
+  INT_PTR CALLBACK  Object_Human_Profile_dialog(  HWND hDlg,     UINT Msg, 
+                                                WPARAM wParam, LPARAM lParam) 
+{
+      Crowd_Module_Human  Module ;
+                   HFONT  font ;           /* Шрифт */
+  static  struct Profile *profile ;
+                     int  elm ;            /* Идентификатор элемента диалога */
+                     int  status ;
+  static             int  index ;
+                    char  text[512] ;
+                    char  value[128] ;
+                  double  value_d ;
+                    char *end ;
+                     int  i ;
+
+/*------------------------------------------------- Большая разводка */
+
+  switch(Msg) {
+
+/*---------------------------------------------------- Инициализация */
+
+    case WM_INITDIALOG: {
+
+                 profile=(struct Profile *)lParam ;
+/*- - - - - - - - - - - - - - - - - - - - -  Инициализация элементов */
+             memset(value, 0, sizeof(value)) ;
+
+   for(i=0 ; profile[i].name[0]!=0 ; i++) {
+
+              if(!stricmp(profile[i].type, "String" ))  strncpy(value, (char   *)profile[i].value, sizeof(value)-1) ;
+         else if(!stricmp(profile[i].type, "Digital"))  sprintf(value, "%lf", *(double *)profile[i].value) ;
+         else                                            strcpy(value, "Unknown value type") ;
+
+            sprintf(text, "%-20.20s %-40.40s %s", profile[i].name, profile[i].title, value) ;
+
+         LB_ADD_ROW(IDC_LIST, text) ;
+                                          }
+
+                   DISABLE(IDC_VALUE) ;
+                   DISABLE(IDC_SET_VALUE) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - -  Пропись шрифтов */
+        font=CreateFont(14, 7, 0, 0, FW_THIN, 
+                          false, false, false,
+                           ANSI_CHARSET,
+                            OUT_DEFAULT_PRECIS,
+                             CLIP_DEFAULT_PRECIS,
+                              DEFAULT_QUALITY,
+                               VARIABLE_PITCH,
+                                "Courier New Cyr") ;
+            SendMessage(ITEM(IDC_LIST), WM_SETFONT, (WPARAM)font, 0) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+  			  return(FALSE) ;
+  			     break ;
+  			}
+
+/*------------------------------------------------ Отработка событий */
+
+    case WM_COMMAND:    {
+
+	status=HIWORD(wParam) ;
+	   elm=LOWORD(wParam) ;
+/*- - - - - - - - - - - - - - - - - - - - - - -  Раскрытие параметра */
+       if(elm==IDC_LIST) {
+
+        if(status==LBN_DBLCLK) {
+
+                index=LB_GET_ROW(elm) ;
+                            SETs(IDC_NAME,     profile[index].name    ) ;
+                            SETs(IDC_TITLE,    profile[index].title   ) ;
+                            SETs(IDC_DESCRIBE, profile[index].describe) ;
+
+                          ENABLE(IDC_VALUE) ;
+                          ENABLE(IDC_SET_VALUE) ;
+
+              if(!stricmp(profile[index].type, "String" ))   strncpy(value, (char *)profile[index].value, sizeof(value)-1) ;
+         else if(!stricmp(profile[index].type, "Digital"))   sprintf(value, "%lf", *(double *)profile[index].value) ;
+         else                                              {
+                          strcpy(value, "Unknown value type") ;
+                         DISABLE(IDC_VALUE) ;
+                         DISABLE(IDC_SET_VALUE) ;
+                                                           }
+
+                            SETs(IDC_VALUE, value) ;
+
+                               }
+
+			            return(FALSE) ;
+                        }
+/*- - - - - - - - - - - - - - - - - - - Установка значения параметра */
+       if(elm==IDC_SET_VALUE) {
+
+                           memset(value, 0, sizeof(value)) ;
+                            GETsl(IDC_VALUE, value, sizeof(value)-1) ;
+
+              if(!stricmp(profile[index].type, "String" )) {
+                                strcpy((char *)profile[index].value, value) ;
+                                                           }
+         else if(!stricmp(profile[index].type, "Digital")) {
+
+                        value_d=strtod(value, &end) ;
+
+                 if(*end!=0) {
+                                SEND_ERROR("Некорректное значение") ;
+			            return(FALSE) ;
+                             }
+
+                 if(profile[index].value_min!=profile[index].value_max)
+                  if(value_d<profile[index].value_min ||
+                     value_d>profile[index].value_max   ) {
+                                   sprintf(text, "Значение должно быть в диапазоне %lf ... %lf", profile[index].value_min, profile[index].value_max) ;
+                                SEND_ERROR(text) ;
+			            return(FALSE) ;
+                                                          }
+
+                      *((double *)profile[index].value)=value_d ;
+
+                                                           }
+
+               sprintf(text, "%-20.20s %-40.40s %s", profile[index].name, profile[index].title, value) ;
+
+            LB_DEL_ROW(IDC_LIST, index) ;
+            LB_INS_ROW(IDC_LIST, index, text) ;
+
+			            return(FALSE) ;
+                              }
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+			  return(FALSE) ;
+			     break ;
+			}
+/*--------------------------------------------------------- Закрытие */
+
+    case WM_CLOSE:      {
+                            EndDialog(hDlg, 0) ;
+  			       return(FALSE) ;
+			              break ;
+			}
+/*----------------------------------------------------------- Прочее */
+
+    default :        {
+			  return(FALSE) ;
+			    break ;
+		     }
+/*-------------------------------------------------------------------*/
+	      }
+/*-------------------------------------------------------------------*/
+
+    return(TRUE) ;
+}
+
+

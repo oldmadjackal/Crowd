@@ -9,13 +9,13 @@ human cr man4 cone
 human cr man5 cone
 human cr man6 cone
 human cr man7 cone
-man1 program tests\man.dcl
-man2 program tests\man.dcl
-man3 program tests\man.dcl
-man4 program tests\man.dcl
-man5 program tests\man.dcl
-man6 program tests\man.dcl
-man7 program tests\man.dcl
+man1 behavior tests\man.dcl
+man2 behavior tests\man.dcl
+man3 behavior tests\man.dcl
+man4 behavior tests\man.dcl
+man5 behavior tests\man.dcl
+man6 behavior tests\man.dcl
+man7 behavior tests\man.dcl
 
 view ring
 
@@ -23,7 +23,8 @@ lookat 0 0 0
 zoom-
 
 human cr dog cube
-dog program tests\dog.dcl
+dog behavior $dog
+dog profile energy=0.8,weariness=0.05,endurance=15
 
 pair kind pass
 pair kind call

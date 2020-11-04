@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by O_Human.rc
+// Включаемый файл, созданный в Microsoft Visual C++.
+// Используется O_Human.rc
 //
 #define IDC_HELP_LIST                   1000
 #define IDC_NAME                        1001
@@ -19,14 +19,20 @@
 #define IDC_PAR_VALUE_5                 1015
 #define IDC_PICTURE                     1016
 #define IDC_CREATE                      1017
+#define IDC_LIST                        1018
+#define IDC_TITLE                       1021
+#define IDC_VALUE                       1022
+#define ID_DESCRIBE                     1023
+#define IDC_DESCRIBE                    1023
+#define IDC_SET_VALUE                   1024
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        103
+#define _APS_NEXT_RESOURCE_VALUE        104
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

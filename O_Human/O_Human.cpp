@@ -87,45 +87,53 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
   struct Crowd_Module_Human_instr  Crowd_Module_Human_InstrList[]={
 
- { "help",   "?",  "#HELP   - список доступных команд", 
+ { "help",    "?",   "#HELP   - список доступных команд", 
                     NULL,
-                   &Crowd_Module_Human::cHelp   },
- { "create", "cr", "#CREATE - создать объект",
-                   " CREATE <Имя> [<Модель> [<Список параметров>]]\n"
-                   "   Создает именованный обьект по параметризованной модели",
-                   &Crowd_Module_Human::cCreate },
- { "info",   "i",  "#INFO - выдать информацию по объекту",
-                   " INFO <Имя> \n"
-                   "   Выдать основную нформацию по объекту в главное окно\n"
-                   " INFO/ <Имя> \n"
-                   "   Выдать полную информацию по объекту в отдельное окно",
-                   &Crowd_Module_Human::cInfo },
- { "base",   "b", "#BASE - задать базовую точку объекта",
-                   " BASE <Имя> <x> <y> <z>\n"
-                   "   Задает базовую точку объекта\n"
-                   " BASE/x <Имя> <x>\n"
-                   "   Задает координату X базовой точки объекта\n"
-                   "       (аналогично для Y и Z)\n"
-                   " BASE/+x <Имя> <x>\n"
-                   "   Задает приращение координаты X базовой точки объекта\n"
-                   "       (аналогично для Y и Z)\n"
-                   " BASE> <Имя>\n"
-                   "   Задает клавиатурное управление базовой точкой объекта\n",
-                   &Crowd_Module_Human::cBase },
- { "color",   "c", "#COLOR   - установить цвет объекта", 
-                   " COLOR <имя> <название цвета>\n"
-                   "   Установить цвет объекта по названию: RED, GREEN, BLUE\n"
-                   " COLOR <имя> RGB <R-индекс>:<G-индекс>:<B-индекс>\n"
-                   "   Установить цвет объекта по RGB-компонентам\n",
-                   &Crowd_Module_Human::cColor      },
- { "visible", "v", "#VISIBLE - задание режима видимости объекта",
-                   " VISIBLE <Имя> \n"
-                   "   Изменить состояние видимости объекта на противоположное",
-                   &Crowd_Module_Human::cVisible },
- { "program", "p", "#PROGRAM - задание программы поведения объекта",
-                   " PROGRAM <Имя> <Путь к файлы программы>\n"
-                   "   Программа поведения объекта находится в файле",
-                   &Crowd_Module_Human::cProgram },
+                     &Crowd_Module_Human::cHelp   },
+ { "create",  "cr",  "#CREATE - создать объект",
+                     " CREATE <Имя> [<Модель> [<Список параметров>]]\n"
+                     "   Создает именованный обьект по параметризованной модели",
+                     &Crowd_Module_Human::cCreate },
+ { "info",    "i",   "#INFO - выдать информацию по объекту",
+                     " INFO <Имя> \n"
+                     "   Выдать основную нформацию по объекту в главное окно\n"
+                     " INFO/ <Имя> \n"
+                     "   Выдать полную информацию по объекту в отдельное окно",
+                     &Crowd_Module_Human::cInfo },
+ { "base",    "b",  "#BASE - задать базовую точку объекта",
+                     " BASE <Имя> <x> <y> <z>\n"
+                     "   Задает базовую точку объекта\n"
+                     " BASE/x <Имя> <x>\n"
+                     "   Задает координату X базовой точки объекта\n"
+                     "       (аналогично для Y и Z)\n"
+                     " BASE/+x <Имя> <x>\n"
+                     "   Задает приращение координаты X базовой точки объекта\n"
+                     "       (аналогично для Y и Z)\n"
+                     " BASE> <Имя>\n"
+                     "   Задает клавиатурное управление базовой точкой объекта\n",
+                     &Crowd_Module_Human::cBase },
+ { "color",    "c",  "#COLOR   - установить цвет объекта", 
+                     " COLOR <имя> <название цвета>\n"
+                     "   Установить цвет объекта по названию: RED, GREEN, BLUE\n"
+                     " COLOR <имя> RGB <R-индекс>:<G-индекс>:<B-индекс>\n"
+                     "   Установить цвет объекта по RGB-компонентам\n",
+                     &Crowd_Module_Human::cColor      },
+ { "visible",  "v",  "#VISIBLE - задание режима видимости объекта",
+                     " VISIBLE <Имя> \n"
+                     "   Изменить состояние видимости объекта на противоположное",
+                     &Crowd_Module_Human::cVisible },
+ { "behavior", "bh", "#BEHAVIOR - задание программы поведения объекта",
+                     " BEHAVIOR <Имя> $<Имя программы>\n"
+                     "   Встроенная программа поведения\n"
+                     " PROGRAM <Имя> <Путь к файлы программы>\n"
+                     "   Программа поведения объекта находится в файле",
+                     &Crowd_Module_Human::cBehavior },
+ { "profile", "p",   "#PROFILE - задание параметров программы поведения объекта",
+                     " PROFILE <Имя> \n"
+                     "   Задание/просмотр в диалоговом режиме\n"
+                     " PROFILE <Имя> <Key1>=<Value1>,...,<KeyN>=<ValueN> \n"
+                     "   Задание командной строкой",
+                     &Crowd_Module_Human::cProfile },
  {  NULL }
                                                             } ;
 
@@ -1046,10 +1054,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
-/*                   Реализация инструкции Program                  */
-/*       PROGRAM <Имя> <Путь к файлу программы>                     */
+/*                   Реализация инструкции Behavior                 */
+/*								    */
+/*       BEHAVIOR <Имя> $<Имя программы>                            */
+/*       BEHAVIOR <Имя> <Путь к файлу программы>                    */
 
-  int  Crowd_Module_Human::cProgram(char *cmd)
+  int  Crowd_Module_Human::cBehavior(char *cmd)
 
 { 
 #define   _PARS_MAX   4
@@ -1082,7 +1092,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
     if(name==NULL) {                                                /* Если имя не задано... */
                       SEND_ERROR("Не задано имя объекта. \n"
-                                 "Например: PROGRAM <Имя_объекта> ...") ;
+                                 "Например: BEHAVIOR <Имя_объекта> ...") ;
                                      return(-1) ;
                    }
 
@@ -1091,11 +1101,23 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /*----------------------------------------- Загрузка файла программы */
 
-     if(path==NULL) {
-                       SEND_ERROR("Не задан файл программы. \n"
-                                  "Например: PROGRAM <Имя объекта> <Путь к файлу программы>") ;
+    if(path==NULL) {
+                       SEND_ERROR("Не задана программа поведения. \n"
+                                  "Например: BEHAVIOR <Имя объекта> <Путь к файлу программы>") ;
                                         return(-1) ;
-                    } 
+                   } 
+/*- - - - - - - - - - - - - - - - - - -  Встроенная модель поведения */
+    if(path[0]=='$') {
+
+       if(!stricmp(path, "$DOG"))   strncpy(object->behavior_model, path, sizeof(object->behavior_model)-1) ;
+       else                       {
+                         sprintf(text, "Неизвестная программа поведения - %s", path) ;
+                      SEND_ERROR(text) ;
+                                        return(-1) ;
+                                  }
+                     }
+/*- - - - - - - - - - - - - - - - - - - - - Внешняя модель поведения */
+    else             {
 
         data=this->FileCache(path, error) ;
      if(data==NULL) {
@@ -1106,6 +1128,148 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
                  object->Program=data ;
 
+                     }
+/*-------------------------------------------------------------------*/
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*                   Реализация инструкции Profile                  */
+/*								    */
+/*       PROFILE <Имя>                                              */
+/*       PROFILE <Имя> <Key1>=<Value1>,...,<KeyN>=<ValueN>          */
+
+  int  Crowd_Module_Human::cProfile(char *cmd)
+
+{ 
+#define   _PARS_MAX   4
+                 char *pars[_PARS_MAX] ;
+                 char *name ;
+                 char *list ;
+   Crowd_Object_Human *object ;
+       struct Profile *profile ;
+                 char *key ;
+                 char *next ;
+                 char *value ;
+               double  value_d ;
+                 char *end ;
+                 char  error[1024] ;
+                 char  text[1024] ;
+                  int  i ;
+
+/*------------------------------------------------ Разбор параметров */        
+
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+                     name=pars[0] ;
+                     list=pars[1] ;
+
+/*------------------------------------------- Поиск объекта по имени */ 
+
+    if(name==NULL) {                                                /* Если имя не задано... */
+                      SEND_ERROR("Не задано имя объекта. \n"
+                                 "Например: PROFILE <Имя_объекта> ...") ;
+                                     return(-1) ;
+                   }
+
+       object=FindObject(name) ;                                    /* Ищем объект по имени */
+    if(object==NULL)  return(-1) ;
+
+/*-------------------------------------- Извлечение описания профиля */
+
+    if(object->behavior_model[0]!=0) {
+
+     if(!stricmp(object->behavior_model, "$DOG"))   object->iBehaviorDog(0, "GET_PROFILE", (void *)&profile, NULL) ;
+     else                                         {
+
+                            SEND_ERROR("Неизвестная модель поведения") ;
+                                                      return(-1) ;
+                                                  }
+                                     } 
+    else                             {
+
+                      SEND_ERROR("Команда поддерживается только для встроенных моделей поведения") ;
+                                             return(-1) ;
+                                     } 
+/*--------------------------- Просмотр/изменение в диалоговом режиме */
+
+    if(list   ==NULL ||
+       list[0]==  0    ) {
+
+             DialogBoxIndirectParam( GetModuleHandle(NULL),
+                                    (LPCDLGTEMPLATE)Resource("IDD_PROFILE", RT_DIALOG),
+			             GetActiveWindow(), 
+                                     Object_Human_Profile_dialog, 
+                                    (LPARAM)profile               ) ;
+
+                                        return(0) ;
+                         }
+/*----------------------------------------- Разбор списка параметров */
+
+     for(key=list, next=list ; next!=NULL ; key=next+1) {
+/*- - - - - - - - - - - - - - - - - - - - - - - Выделение параметров */
+             next=strchr(key, ',') ;
+          if(next!=NULL)  *next=0 ;    
+
+             value=strchr(key, '=') ;
+          if(value==NULL) {
+                               sprintf(error, "Некорректная структура списка параметров около %s", key) ;
+                            SEND_ERROR(error) ;
+                                  return(-1) ;
+                          }
+
+            *value=0 ;
+             value++ ;
+/*- - - - - - - - - - - - - - - - - - - - -  Идентификация параметра */
+        for(i=0 ; profile[i].name[0]!=0 ; i++)
+          if(!stricmp(key, profile[i].name))  break ;
+
+          if(profile[i].name[0]==0) {
+                                      sprintf(error, "Неизвестный параметр %s", key) ;
+                                   SEND_ERROR(error) ;
+                                         return(-1) ;
+                                    }
+/*- - - - - - - - - - - - - - - - - - Контроль и присвоение значения */
+          if(!stricmp(profile[i].type, "String" )) {
+
+                                strcpy((char *)profile[i].value, value) ;
+
+                                                   }
+          else
+          if(!stricmp(profile[i].type, "Digital")) {
+
+                        value_d=strtod(value, &end) ;
+
+             if(*end!=0) {
+                               sprintf(error, "Некорректное значение для параметра %s = %s ", key, value) ;
+                            SEND_ERROR(error) ;
+                                  return(-1) ;
+                         }
+
+             if(profile[i].value_min!=profile[i].value_max)
+                  if(value_d<profile[i].value_min ||
+                     value_d>profile[i].value_max   ) {
+                                   sprintf(text, "Значение параметра %s должно быть в диапазоне %lf ... %lf", key, profile[i].value_min, profile[i].value_max) ;
+                                SEND_ERROR(text) ;
+			            return(FALSE) ;
+                                                      }
+
+                      *((double *)profile[i].value)=value_d ;
+
+                                                   }
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                                        }
 /*-------------------------------------------------------------------*/
 
    return(0) ;
@@ -1169,6 +1333,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 {
    strcpy(Type, "Human") ;
+
+   memset(behavior_model, 0, sizeof(behavior_model)) ;
+          behavior_data=NULL ;
 }
 
 
@@ -1199,9 +1366,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
           free(this->Features) ;
 }
-
-
-
 
 
 /********************************************************************/
@@ -1305,6 +1469,19 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 	 {0, 0, 0, 0, "", NULL, NULL, 0, 0}
                               } ;
 
+/*----------------------------------- Встроенная программа поведения */
+
+   if(this->behavior_model[0]!=0) {
+
+     if(!stricmp(this->behavior_model, "$DOG"))  this->iBehaviorDog(t, type, data, task) ;
+     else                                       {
+                  sprintf(error, "Section HUMAN: Неизвестный встроенный сценарий поведения: %s", this->behavior_model) ;
+               SEND_ERROR(error) ;
+                     return(-1) ;
+                                                }
+
+                                       return(0) ;
+                                  } 
 /*-------------------------------------- Определение DCL-вычислителя */
 
 #define  CALC_CNT   Crowd_Kernel::calculate_modules_cnt
@@ -1419,6 +1596,92 @@ BOOL APIENTRY DllMain( HANDLE hModule,
   return(0) ;
 }
 
+
+/********************************************************************/
+/*								    */
+/*                       Модель поведения - DOG                     */
+
+     int  Crowd_Object_Human::iBehaviorDog(long  t, char *event_type, void *event_data, Crowd_Kernel *task)
+{
+   Crowd_Message  *message ;
+      struct Dog  *data ;
+  struct Profile **profile_ext ;
+             int   j ;
+
+  static  struct Profile  profile[]={
+            { "energy",    "Энергичность", "Часть расстояния до цели, пробегаемая за цикл",                "Digital", 0.,   1.0, NULL, NULL },
+            { "weariness", "Усталость",    "Коэффициент снижения 'энергичности' за цикл",                  "Digital", 0.,   1.0, NULL, NULL },
+            { "endurance", "Выносливость", "Число циклов, в течении которого 'энергичность' не снижается", "Digital", 0., 999.0, NULL, NULL },
+            { "" } 
+                                    } ; 
+
+/*==================================================== Инициализация */
+
+   if(behavior_data==NULL) {
+
+            behavior_data=(void *)calloc(1, sizeof(struct Dog)) ;
+                     data=(struct Dog *)behavior_data ;
+
+
+    for(j=0 ; j<this->Features_cnt ; j++)                           /* Извлекаем ссылку на цвет */
+      if(!stricmp(this->Features[j]->Type, "Show"))  
+            data->color=&((Crowd_Feature_Show *)this->Features[j])->Color ;
+
+                           }
+
+                     data=(struct Dog *)behavior_data ;
+
+/*============================================ Событие - GET PROFILE */
+
+  if(!stricmp(event_type, "GET_PROFILE")) {
+
+              profile[0].value=&(data->energy) ;
+              profile[1].value=&(data->weariness) ;
+              profile[2].value=&(data->endurance) ;
+
+                  profile_ext=(struct Profile **)event_data ;
+                 *profile_ext=                   profile ;
+
+                                                 return(0) ;
+                                          }
+/*================================================ Событие - MESSAGE */
+
+  if(!stricmp(event_type, "MESSAGE")) {
+
+                      message=(Crowd_Message *)event_data ;
+
+/*------------------- Отложенный запрос себя или системное сообщение */
+
+    if(message->Object_s==NULL) {
+/*- - - - - - - - - - - -  Системные сообщения: инициализация и т.д. */
+     if(!stricmp(message->Type, "system")) {
+
+//                  data->energy = 0.8 ; 
+
+                        return(0) ;
+                                           }
+/*- - - - - - - - - - - - - - - - - - - - Отложенные запросы на себя */
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                }
+/*------------------------------------------------ Внешнее сообщение */
+
+    else                        {
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Реакция на сигнал */
+                *(data->color)=RGB(0, 255, 255) ;
+
+          this->x_base+=(message->Object_s->x_base-this->x_base)*data->energy ;
+          this->y_base+=(message->Object_s->y_base-this->y_base)*data->energy ;
+
+     if(t>data->endurance) data->energy = data->energy*(1.-data->weariness) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                }
+/*-------------------------------------------------------------------*/
+                                      }
+/*===================================================================*/
+
+  return(0) ;
+}
 
 
 /********************************************************************/
