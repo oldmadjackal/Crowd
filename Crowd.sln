@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Crowd_root", "Crowd_root\Crowd_root.vcxproj", "{83D56F4E-A1BA-42AF-97B2-735732C68462}"
+	ProjectSection(ProjectDependencies) = postProject
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3} = {07E414F1-5A57-4A68-B1CC-029A82367ED3}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Matrix", "Matrix\Matrix.vcxproj", "{69EC1B80-B635-4727-9C61-E399286ACEDA}"
 EndProject
@@ -40,6 +43,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Crowd_message", "Crowd_message\Crowd_message.vcxproj", "{87528B19-860C-4730-AB0C-1E2E3CF2CA08}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M_Contact", "M_Contact\M_Contact.vcxproj", "{CC855291-756E-452D-9138-29DAD0511AAA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M_Broadcast", "M_Broadcast\M_Broadcast.vcxproj", "{07E414F1-5A57-4A68-B1CC-029A82367ED3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -201,6 +206,14 @@ Global
 		{CC855291-756E-452D-9138-29DAD0511AAA}.Release|Win32.Build.0 = Release|Win32
 		{CC855291-756E-452D-9138-29DAD0511AAA}.Release|x64.ActiveCfg = Release|x64
 		{CC855291-756E-452D-9138-29DAD0511AAA}.Release|x64.Build.0 = Release|x64
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Debug|Win32.Build.0 = Debug|Win32
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Debug|x64.ActiveCfg = Debug|x64
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Debug|x64.Build.0 = Debug|x64
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Release|Win32.ActiveCfg = Release|Win32
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Release|Win32.Build.0 = Release|Win32
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Release|x64.ActiveCfg = Release|x64
+		{07E414F1-5A57-4A68-B1CC-029A82367ED3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

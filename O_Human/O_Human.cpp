@@ -1109,12 +1109,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*- - - - - - - - - - - - - - - - - - -  Встроенная модель поведения */
     if(path[0]=='$') {
 
-       if(!stricmp(path, "$DOG"))   strncpy(object->behavior_model, path, sizeof(object->behavior_model)-1) ;
-       else                       {
+       if(!stricmp(path, "$DOG"   ) ||
+          !stricmp(path, "$SPECTR")  )   strncpy(object->behavior_model, path, sizeof(object->behavior_model)-1) ;
+       else                            {
                          sprintf(text, "Неизвестная программа поведения - %s", path) ;
                       SEND_ERROR(text) ;
-                                        return(-1) ;
-                                  }
+                           return(-1) ;
+                                        }
                      }
 /*- - - - - - - - - - - - - - - - - - - - - Внешняя модель поведения */
     else             {
@@ -1190,12 +1191,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
     if(object->behavior_model[0]!=0) {
 
-     if(!stricmp(object->behavior_model, "$DOG"))   object->iBehaviorDog(0, "GET_PROFILE", (void *)&profile, NULL) ;
-     else                                         {
+      if(!stricmp(object->behavior_model, "$DOG"   ))   object->iBehaviorDog   (0, "GET_PROFILE", (void *)&profile, NULL) ;
+      else
+      if(!stricmp(object->behavior_model, "$SPECTR"))   object->iBehaviorSpectr(0, "GET_PROFILE", (void *)&profile, NULL) ;
+      else                                            {
 
                             SEND_ERROR("Неизвестная модель поведения") ;
-                                                      return(-1) ;
-                                                  }
+                                   return(-1) ;
+                                                      }
                                      } 
     else                             {
 
@@ -1473,7 +1476,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
    if(this->behavior_model[0]!=0) {
 
-     if(!stricmp(this->behavior_model, "$DOG"))  this->iBehaviorDog(t, type, data, task) ;
+     if(!stricmp(this->behavior_model, "$DOG"   ))  this->iBehaviorDog   (t, type, data, task) ;
+     else 
+     if(!stricmp(this->behavior_model, "$SPECTR"))  this->iBehaviorSpectr(t, type, data, task) ;
      else                                       {
                   sprintf(error, "Section HUMAN: Неизвестный встроенный сценарий поведения: %s", this->behavior_model) ;
                SEND_ERROR(error) ;
@@ -1674,6 +1679,209 @@ BOOL APIENTRY DllMain( HANDLE hModule,
           this->y_base+=(message->Object_s->y_base-this->y_base)*data->energy ;
 
      if(t>data->endurance) data->energy = data->energy*(1.-data->weariness) ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                }
+/*-------------------------------------------------------------------*/
+                                      }
+/*===================================================================*/
+
+  return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*                       Модель поведения - SPECTR                  */
+
+     int  Crowd_Object_Human::iBehaviorSpectr(long  t, char *event_type, void *event_data, Crowd_Kernel *task)
+{
+   Crowd_Message  *message ;
+   struct Spectr  *data ;
+  struct Profile **profile_ext ;
+          double   info_spectr[_SIGNAL_MAX] ;
+          double   info_rate ;
+          double   reaction ;
+             int   distrust ;
+          double   angle ;
+            char  *info ;
+            char  *end ;
+             int   n ;
+             int   i ;
+             int   j ;
+
+  static  struct Profile  profile[]={
+            { "forget",   "Период забывания",   "Число циклов забывания предыдущего сигнала",                     "Digital",  0.0,  100000.0, NULL, NULL },
+            { "penalty",  "Штраф за 'метания'", "Коэффициент отрицательной реакции при смене позиции",            "Digital",  0.0,  100000.0, NULL, NULL },
+            { "shock",    "Коэффициент шока",   "Величина изменения сигнала, приводящая к недоверию к источнику", "Digital",  0.0,  100000.0, NULL, NULL },
+            { "distrust", "Период недоверия",   "Период недоверия к источнику",                                   "Digital",  0.0,  100000.0, NULL, NULL },
+            { "sense1",   "Чувствительность 1", "Чувствительность к сигналу 1",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense2",   "Чувствительность 2", "Чувствительность к сигналу 2",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense3",   "Чувствительность 3", "Чувствительность к сигналу 3",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense4",   "Чувствительность 4", "Чувствительность к сигналу 4",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense5",   "Чувствительность 5", "Чувствительность к сигналу 5",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense6",   "Чувствительность 6", "Чувствительность к сигналу 6",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense7",   "Чувствительность 7", "Чувствительность к сигналу 7",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense8",   "Чувствительность 8", "Чувствительность к сигналу 8",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "sense9",   "Чувствительность 9", "Чувствительность к сигналу 9",                                   "Digital", -1.0,       1.0, NULL, NULL },
+            { "" } 
+                                    } ; 
+
+/*==================================================== Инициализация */
+
+   if(behavior_data==NULL) {
+
+            behavior_data=(void *)calloc(1, sizeof(struct Spectr)) ;
+                     data=(struct Spectr *)behavior_data ;
+
+
+    for(j=0 ; j<this->Features_cnt ; j++)                           /* Извлекаем ссылку на цвет */
+      if(!stricmp(this->Features[j]->Type, "Show"))  
+            data->color=&((Crowd_Feature_Show *)this->Features[j])->Color ;
+
+                           }
+
+                     data=(struct Spectr *)behavior_data ;
+
+/*============================================ Событие - GET PROFILE */
+
+  if(!stricmp(event_type, "GET_PROFILE")) {
+
+                      i=0 ;
+              profile[i].value=&(data->forget_period) ;
+                      i++ ;
+              profile[i].value=&(data->penalty) ;
+                      i++ ;
+              profile[i].value=&(data->shock) ;
+                      i++ ;
+              profile[i].value=&(data->distrust_period) ;
+                      i++ ;
+
+       for(j=0 ; j<_SIGNAL_MAX ; j++)
+              profile[i+j].value=&(data->signal_sensitivity[j]) ;
+
+                  profile_ext=(struct Profile **)event_data ;
+                 *profile_ext=                   profile ;
+
+                                                 return(0) ;
+                                          }
+/*================================================ Событие - MESSAGE */
+
+  if(!stricmp(event_type, "MESSAGE")) {
+
+                      message=(Crowd_Message *)event_data ;
+
+/*------------------- Отложенный запрос себя или системное сообщение */
+
+    if(message->Object_s==NULL) {
+/*- - - - - - - - - - - -  Системные сообщения: инициализация и т.д. */
+     if(!stricmp(message->Type, "system")) {
+
+//                  data->energy = 0.8 ; 
+
+                        return(0) ;
+                                           }
+/*- - - - - - - - - - - - - - - - - - - - Отложенные запросы на себя */
+
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+                                }
+/*------------------------------------------------ Внешнее сообщение */
+
+    else                        {
+/*- - - - - - - - - - - - - - - - - - - - - - -  Обработка забывания */
+     if(t!=data->memory_t) {
+
+           data->memory_t=t ;
+
+        for(i=0 ; i<_MEMORY_MAX ; i++) {
+
+            if(data->signal_memory[i].sender==NULL)  continue ;
+
+            if(data->signal_memory[i].distrust>0)  data->signal_memory[i].distrust-- ;
+
+#define  MEMORY  data->signal_memory[i]
+
+          for(j=0 ; j<_SIGNAL_MAX ; j++)
+            if(MEMORY.signal[j]>0.) {
+
+               if(MEMORY.forget[j]>1.5) {  MEMORY.signal[j]-=MEMORY.signal[j]/MEMORY.forget[j] ;
+                                           MEMORY.forget[j]-= 1. ;                               }
+               else                     {  MEMORY.signal[j] = 0. ;
+                                           MEMORY.forget[j] = 0. ;                               }
+                                    }
+
+#undef   MEMORY
+                                       }
+
+                           }
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Реакция на сигнал */
+     if(message->Info!=NULL)
+      if(!memicmp(message->Info, "spectr:", strlen("spectr:"))) {   /* Если спектральный сигнал... */
+
+            memset(info_spectr, 0, sizeof(info_spectr)) ;
+
+              info=message->Info+strlen("spectr:") ;
+
+         for(i=0 ; i<_SIGNAL_MAX ; info=end+1, i++) {               /* Разбираем сигнал по компонентам */
+
+              info_spectr[i]=strtod(info, &end) ;
+
+           if(*end==0)  break ;  
+                                                    }
+
+            info_rate=i+1 ;                                         /* Коэффициент нормализации - по числу компонент в сигнале */
+
+        for(n=0 ; n<_MEMORY_MAX ; n++) {                            /* Ищем слот памяти источника */
+          if(data->signal_memory[n].sender==message->Object_s)  break ;
+          if(data->signal_memory[n].sender==  NULL           )  break ;
+                                       }
+
+          if(n>=_MEMORY_MAX) {
+                                 SEND_ERROR("Модель SPECTR - Переполнение списка источников сигналов") ;
+                                       return(-1) ;
+                             }
+
+            data->signal_memory[n].sender=message->Object_s ;       /* Фиксируем слот источника */  
+
+                   reaction=0. ;
+
+          distrust=data->signal_memory[n].distrust ;                /* Определяем состояние недоверия */
+       if(distrust==0) {                                            /* Если мы доверяем источнику... */
+
+         for(i=0 ; i<_SIGNAL_MAX ; i++)                             /* Определение "сродства" сигнала */
+              reaction+=info_spectr[i] * data->signal_sensitivity[i] ;
+
+              reaction/=info_rate ;                                 /* Нормализуем "сродство" */
+
+                                                                    /* Определение "недопустимого метания" */
+         for(i=0 ; i<_SIGNAL_MAX ; i++) 
+           if(info_spectr[i]*data->signal_memory[n].signal[i]<0.) {
+
+                reaction+=data->penalty*info_spectr[i]*data->signal_memory[n].signal[i] ;
+
+             if(fabs(info_spectr[i])+
+                fabs(data->signal_memory[n].signal[i]) > data->shock)  data->signal_memory[n].distrust=data->distrust_period ;
+                                                                  }
+                       }
+
+           if(distrust >0 )  *(data->color)=RGB(  0,   0, 255) ;
+           else
+           if(reaction==0.)  *(data->color)=RGB(255, 255, 255) ;
+           else
+           if(reaction >0.)  *(data->color)=RGB(  0, 255,   0) ;
+           else              *(data->color)=RGB(255,   0,   0) ; 
+
+           angle=atan2(message->Object_s->y_base-this->y_base, 
+                       message->Object_s->x_base-this->x_base ) ;
+
+          this->x_base+=reaction*cos(angle) ;
+          this->y_base+=reaction*sin(angle) ;
+
+        for(i=0 ; i<_SIGNAL_MAX ; i++)                              /* Инициализируем "память" для непустых компонентов спектра */
+          if(info_spectr[i]!=0.) {
+               data->signal_memory[n].signal[i]=info_spectr[i] ;
+               data->signal_memory[n].forget[i]=data->forget_period ;
+                                 }
+                                                                }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
                                 }
 /*-------------------------------------------------------------------*/
@@ -2294,11 +2502,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
                                                        }            /* END LOOP - Перебор строк */
-
-
-    
-
-
 /*-------------------------------------------------------------------*/
 
 #undef   _BUFF_SIZE

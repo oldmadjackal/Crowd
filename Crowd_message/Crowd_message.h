@@ -19,6 +19,7 @@
                                char  Name[128] ;          /* Имя сообщения */
                                char  Type[128] ;          /* Тип сообщения */
                                char  Kind[128] ;          /* Вид сообщения */
+                               char *Info ;               /* Данные сообщения */
                  class Crowd_Object *Object_s ;           /* Объект-отправитель */ 
                  class Crowd_Object *Object_r ;           /* Объект-получатель */ 
 

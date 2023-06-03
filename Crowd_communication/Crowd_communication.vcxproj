@@ -262,8 +262,10 @@
       <OutputFile>.\Release/Crowd_communication.bsc</OutputFile>
     </Bscmake>
     <PostBuildEvent>
-      <Message>Copy to Work area</Message>
-      <Command>copy .\Release\*.dll d:\_MGTU\Crowd\_Release</Command>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,0 +1,4 @@
+LIBRARY M_Broadcast
+   EXPORTS
+         Identify   DATA
+	 GetEntry   DATA

@@ -47,6 +47,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     memset(Type, 0, sizeof(Type)) ;
     memset(Kind, 0, sizeof(Kind)) ;
 
+           Info    =NULL ;
            Object_s=NULL ;
            Object_r=NULL ;
 }

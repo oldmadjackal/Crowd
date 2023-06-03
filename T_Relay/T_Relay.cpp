@@ -692,7 +692,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                       SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)text) ;
                        }
 /*- - - - - - - - - - - - - - - -  Определение объекта - обработчика */
-
        for(i=0 ; i<OBJECTS_CNT ; i++) {
               if(QUEUE[n]->Object_r!=NULL    )  object=QUEUE[n]->Object_r ;
          else if(QUEUE[n]->vCheck(OBJECTS[i]))  object=OBJECTS[i] ; 
