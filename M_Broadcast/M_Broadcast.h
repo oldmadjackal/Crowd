@@ -62,12 +62,11 @@
     public:
             virtual void  vReadSave     (char *, std::string *,        /* Считать данные из строки */
                                                         char * ) ;
+            virtual void  vFree         (void) ;                       /* Освободить ресурсы */  
             virtual void  vGetInfo      (std::string *) ;              /* Выдать информацию о свойстве */
             virtual  int  vParameter    (char *, char *, char *) ;     /* Работа с параметрами */  
             virtual  int  vFormBySpec   (char *) ;                     /* Формировать сообщение по спецификации */
             virtual  int  vCheck        (class Crowd_Object *) ;       /* Проверка наличия связи */ 
-
-                    void  Show          (void) ;                       /* Отобразить объект */
 
 	                  Crowd_Message_Broadcast() ;                 /* Конструктор */
 	                 ~Crowd_Message_Broadcast() ;                 /* Деструктор */

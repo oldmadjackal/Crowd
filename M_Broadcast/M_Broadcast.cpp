@@ -497,7 +497,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*								    */
 /*		      Освободить ресурсы        		    */
 
-    void Crowd_Message::vFree(void)
+    void Crowd_Message_Broadcast::vFree(void)
 
 {
     if(Info!=NULL)  free(Info) ;
