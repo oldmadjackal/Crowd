@@ -73,16 +73,11 @@
   _EXTERNAL  HANDLE  hFilesIface_Tread ;                   /* Процесс для файлового интерфейса */
   _EXTERNAL   DWORD  hFilesIface_PID ;
 
-  _EXTERNAL  HANDLE  hTcpIface_Tread ;                     /* Процесс для сетевого интерфейса */
-  _EXTERNAL   DWORD  hTcpIface_PID ;
-
   _EXTERNAL    HWND  hConsoleDialog ;
 
   _EXTERNAL    char  __control_folder[FILENAME_MAX] ;      /* Папка управляющих файлов */
   _EXTERNAL    char  __control_object[FILENAME_MAX] ;      /* Отслеживаемый объект - по умолчанию или * - все */
   _EXTERNAL    char  __targets_path[FILENAME_MAX] ;        /* Файл списка целей */
-
-  _EXTERNAL    char  __port[FILENAME_MAX] ;                /* Контактный порт сетевого интерфейса */
 
 /*------------------------------------------ Описание объектов сцены */
 
@@ -113,77 +108,10 @@
   _EXTERNAL     int  __targets_cnt ;
   _EXTERNAL    long  __targets_time ;
 
-/*------------------------------------------------ Класс TCP-сервера */
-
-#ifdef  __MAIN__
-
-  typedef  struct {                        /* Описание клиента */ 
-                      int   use_flag ;
-                      int   close_flag ;     /* Постановка на закрытие */
-                   time_t   close_time ;     /* Время закрытия */
-                     char   descr[64] ;      /* Строка текстового описания */
-
-               Tcp_client  *TCP_client ;     /* Ссылка на TCP-клиента */
-                     char   ip[64] ;         /* IP-адрес клиента */
-                      int   socket ;         /* Номер сокета */
-
-                   HANDLE   thread ;         /* Идентификаторы потока обработки */
-                    DWORD   thread_id ;
-                      int   thread_exit ;    /* Флаг зевершения потока обработки */
-                   HANDLE   hEvent ;         /* Ссылка на событие */
-                  Tcp_job  *job ;            /* Данные обмена */
-
-                   Object   object ;         /* Данные моделируемого объекта */
-                      int   processed ;      /* Флаг завершения моделирования */
-                      int   error ;          /* Флаг ошибки в процессе моделирования */
-                     char   result[8192] ;   /* Результат расчета */
-
-                  } SRV_client ;
-
-  _EXTERNAL   SRV_client **__clients ;
-  _EXTERNAL          int   __clients_cnt ;
-
-  _EXTERNAL unsigned int   __process_idx ;
-
-  class  Server_TCP : public Tcp {
-
-      public :
-
-       virtual int  vExternControl     (void) ;                        /* Обработчик внешнего управления */
-       virtual int  vExternal          (SOCKET) ;                      /* Отработка внешних событий */ 
-       virtual int  vCloseConnect      (void *) ;                      /* Закрытие канала связи */
-       virtual int  vProcessData       (Tcp_job *, void *) ;           /* Обработка полученных данных */
-       virtual int  vMessagesLog       (Tcp_client *,                  /* Ведение лога обмена */
-                                            std::string *, char *) ;
-                                                                    
-      public :
-                    Server_TCP() ;          /* Конструктор */
-                   ~Server_TCP() ;          /* Деструктор */
-                                      } ;
-
-  _EXTERNAL     int  __IP_port ;             /* Контактный порт */
-
-#endif
-
 /*------------------------------------------ Параметры моделирования */
 
                                              /* Модель AGENT */ 
   _EXTERNAL  double  __step ;                 /* Размерность шага */
-
-/*---------------------------------------------- Хранилище контекста */
-
-  typedef struct {                                   /* Контекст объекта */
-                      char  name[128] ;               /* Название */
-                    double  t1 ;                      /* Период моделирования */
-                    double  x, y, z ;                 /* Координаты объекта */
-                    double  x_t, y_t, z_t ;           /* Координаты цели */
-                       int  missed ;                  /* Признак промаха */
-                 } Context ;
-
-#define        _CONTEXTS_MAX   100
-
-  _EXTERNAL  Context *__contexts[_CONTEXTS_MAX] ;        /* Список контекстов объектов */
-  _EXTERNAL      int  __contexts_cnt ;
 
 /*-------------------------------------------------------- Прототипы */
 
@@ -208,7 +136,6 @@
                              char *, char *, char *, char *, int) ;
 
     DWORD WINAPI  FilesIface_Tread   (LPVOID) ;
-    DWORD WINAPI  TcpIface_Tread     (LPVOID) ;
     DWORD WINAPI  Model_Process_Tread(LPVOID) ;
 
 /* EM_console.cpp */

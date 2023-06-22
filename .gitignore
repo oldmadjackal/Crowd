@@ -10,3 +10,5 @@
 /O_External/x64
 /ExternalModel_C++/x64
 /ExternalModel_C++/*.aps
+/.vs
+/C_Dcl/Debug

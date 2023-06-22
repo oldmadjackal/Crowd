@@ -1630,13 +1630,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
        if(memory_events[0]!=0)  strcat(memory_events, ",\r\n") ;
 
-          sprintf(memory_events+strlen(memory_events), " [ \"event\":\"message\"," 
+          sprintf(memory_events+strlen(memory_events), " { \"event\":\"message\"," 
                                                         " \"sender\":\"%s\","
                                                       " \"receiver\":\"%s\","
                                                           " \"type\":\"%s\","
                                                           " \"kind\":\"%s\","
                                                           " \"name\":\"%s\","
-                                                           "\"info\":\"%s\" ]", 
+                                                           "\"info\":\"%s\" }", 
                                                               name_s,
                                                               name_r,
                                                               message->Type,
@@ -1707,16 +1707,18 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
                           *targets=0 ;
 
-        sprintf(text, "\"t\":\"%ld\";[\r\n", t) ;
+        sprintf(text, "{ \"t\":\"%ld\",\"objects\":[\r\n", t) ;
          strcat(targets, text) ;  
 
        for(i=0 ; i<OBJECTS_CNT ; i++) {
 
 #define   O    OBJECTS[i]
 
-             sprintf(text, "{ \"name\":\"%s\";"
-                             "\"x\":\"%.2lf\";\"y\":\"%.2lf\";\"z\":\"%.2lf\";"
-                             "\"type\":\"%s\"};\r\n",
+         if(i>0)  strcat(targets, ",") ;
+
+             sprintf(text, "{ \"name\":\"%s\","
+                             "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\","
+                             "\"type\":\"%s\"}\r\n",
                                 O->Name,
                                 O->x_base, O->y_base, O->z_base,
                                 O->Type ) ;
@@ -1726,8 +1728,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 #undef    O
                                       }
 
-        sprintf(text, "{\"name\":\"$END_OF_LIST$\"}\r\n]\r\n") ;
-         strcat(targets, text) ;  
+              strcat(targets, "]\r\n}") ;  
 
                                   targets_time=t ;
                         } 
@@ -1755,7 +1756,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*- - - - - - - - - - - - - -  Отправка запроса через интерфейс FILE */
    if(!stricmp(this->iface_type, "FILE")) {
 
-         file=fopen(this->iface_targets, "w") ;
+         file=fopen(this->iface_targets, "wb") ;
       if(file==NULL) {
                           sprintf(text, "Ошибка создания файла объектов: %s", this->iface_targets) ;
                        SEND_ERROR(text) ;
@@ -1805,40 +1806,45 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
          memset(text, 0, _BUFF_MAX) ;
 
-        sprintf(value, "\"name\":\"%s\";\"t\":\"%ld\"\r\n", this->Name, t) ;
+         strcat(text, "{");
+        sprintf(value, "\"name\":\"%s\",\"t\":\"%ld\",", this->Name, t) ;
          strcat(text, value) ;  
-        sprintf(value, "\"x\":\"%.2lf\";\"y\":\"%.2lf\";\"z\":\"%.2lf\"\r\n", this->x_base, this->y_base, this->z_base) ;
+        sprintf(value, "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\",", this->x_base, this->y_base, this->z_base) ;
          strcat(text, value) ;  
-        sprintf(value, "\"type\":\"%s\"\r\n", this->object_type) ;
+        sprintf(value, "\"type\":\"%s\",\r\n", this->object_type) ;
          strcat(text, value) ; 
 
-        sprintf(value, "\"links\":{\r\n") ;                           /* Список связей */
+        sprintf(value, "\"links\":[\r\n") ;                           /* Список связей */
          strcat(text, value) ; 
 
     for(i=0 ; i<this->Communications_cnt ; i++) {  
 
-        sprintf(value, " [ \"type\":\"%s\" ", this->Communications[i]->Type) ;
+      if(i>0)  strcat(text, ",") ; 
+
+        sprintf(value, " { \"type\":\"%s\", ", this->Communications[i]->Type) ;
          strcat(text, value) ; 
-        sprintf(value, "\"kind\":\"%s\" ", this->Communications[i]->Kind) ;
+        sprintf(value, "\"kind\":\"%s\", ", this->Communications[i]->Kind) ;
          strcat(text, value) ; 
-        sprintf(value, "\"color\":\"%d\" ", this->Communications[i]->Color) ;
+        sprintf(value, "\"color\":\"%d\", ", this->Communications[i]->Color) ;
          strcat(text, value) ; 
-        sprintf(value, "\"visible\":\"%d\" ", this->Communications[i]->Visible) ;
+        sprintf(value, "\"visible\":\"%d\", ", this->Communications[i]->Visible) ;
          strcat(text, value) ; 
-        sprintf(value, "\"master\":\"%s\" ", this->Communications[i]->Object_m->Name==NULL ? "" : this->Communications[i]->Object_m->Name) ;
+        sprintf(value, "\"master\":\"%s\", ", this->Communications[i]->Object_m->Name==NULL ? "" : this->Communications[i]->Object_m->Name) ;
          strcat(text, value) ; 
-        sprintf(value, "\"slave\":\"%s\" ]\r\n", this->Communications[i]->Object_s->Name==NULL ? "" : this->Communications[i]->Object_s->Name) ;
+        sprintf(value, "\"slave\":\"%s\" }\r\n", this->Communications[i]->Object_s->Name==NULL ? "" : this->Communications[i]->Object_s->Name) ;
          strcat(text, value) ; 
                                                 } 
 
-        sprintf(value, "}\r\n") ;
+        sprintf(value, "],\r\n") ;
          strcat(text, value) ; 
 
-        sprintf(value, "\"events\":{\r\n") ;                        /* Список событий */
+        sprintf(value, "\"events\":[\r\n") ;                        /* Список событий */
          strcat(text, value) ; 
          strcat(text, this->memory_events) ; 
-        sprintf(value, "\r\n}\r\n") ;
+        sprintf(value, "\r\n]\r\n") ;
          strcat(text, value) ; 
+
+         strcat(text, "}");
 /*- - - - - - - - - - - - - -  Отправка запроса через интерфейс FILE */
    if(!stricmp(this->iface_type, "FILE")) {
                          
@@ -1917,10 +1923,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                         "\"x\":\"",
                         "\"y\":\"",
                         "\"z\":\"",
-                        "\"commands\":{",
+                        "\"commands\":[",
                             NULL} ;
 
-//  ["command":"sendmessage","name":"ext1-1","type":"Contact","kind":"Info","recipient":"sender1","info":"spectr:1,0.7,-0.5","delay":"0"]
+//  {"command":"sendmessage","name":"ext1-1","type":"Contact","kind":"Info","recipient":"sender1","info":"spectr:1,0.7,-0.5","delay":"0"}
   static  char *sm_keys[]={"\"name\":\"",
                            "\"type\":\"",
                            "\"kind\":\"", 
@@ -2024,10 +2030,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
   while(em_commands[0]!=0) {
 
-         cmd=strchr(em_commands, '[') ;
+         cmd=strchr(em_commands, '{') ;
       if(cmd==NULL)   break ;
 
-         cmd_end=strchr(cmd, ']') ;
+         cmd_end=strchr(cmd, '}') ;
       if(cmd_end==NULL)  {
                               sprintf(text, "Command element terminator ']' missed") ;
                            SEND_ERROR(text) ;
@@ -2055,7 +2061,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
         *cmd_end=0 ;
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - -  SendMessage */
-//  "name":"..." "type":"..." "kind":"..." "receiver":"..." "info":"..." "delay":"..."
+//  "name":"...","type":"...","kind":"...","receiver":"...","info":"...","delay":"..."
    if(!stricmp(command, "SendMessage")) {
 
      for(i=0 ; sm_keys[i]!=NULL ; i++) {                            /* Разбор атрибутов команды */

@@ -88,7 +88,7 @@
 
           sender=__targets[j] ;
 
-              r = sqrt(sender->x*sender->x+sender->y*sender->y) ;
+              r = sqrt( (sender->x-data->x)*(sender->x-data->x) + (sender->y-data->y)*(sender->y-data->y) ) ;
           angle =atan2(data->y-sender->y, data->x-sender->x) ;
           angle+=__step/r ;
 

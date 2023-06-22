@@ -73,8 +73,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
           HICON  hIcon ;
-           WORD  version ;
-        WSADATA  winsock_data ;        /* Данные системы WINSOCK */
             MSG  SysMessage ;
            char  text[2048] ;
             int  status ;
@@ -181,31 +179,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                   SendMessage(__sections[0].hWnd, WM_USER,
                                 (WPARAM)_USER_SECTION_ENABLE, NULL) ;
 
-/*------------------------------------- Инициализация сетевого стека */
-
-   if(__port[0]!=0) {
-
-                          version=MAKEWORD(1, 1) ;
-        status=WSAStartup(version, &winsock_data) ;                 /* Иниц. Win-Sockets */
-     if(status) {
-                     sprintf(text, "Win-socket DLL loading error: %d", WSAGetLastError()) ;
-                  EM_message(text) ;
-                       return(-1) ;
-                }
-
-                    }
 /*------------------------------- Запуск отдельных потоков обработки */
-
-   if(__port[0]!=0) {
-
-            hTcpIface_Tread=CreateThread(NULL, 0, TcpIface_Tread,
-                                         NULL, 0, &hTcpIface_PID) ;
-                    }
-   else             {
 
           hFilesIface_Tread=CreateThread(NULL, 0, FilesIface_Tread,
                                          NULL, 0, &hFilesIface_PID) ;
-                    }
+
 /*------------------------------------------ Главный диалоговый цикл */
 
    while(1) {
@@ -222,11 +200,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
        Shell_NotifyIcon(NIM_DELETE, &TbIcon) ;                      /* Удаление TaskBar-иконки */
 
-/*-------------------------------------------- Освобождение ресурсов */
-
-   if(__port[0]!=0) {
-                        WSACleanup() ;                              /* Освобождение. Win-Sockets */
-                    }
 /*-------------------------------------------------------------------*/
 
   return(0) ;
@@ -940,91 +913,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 /********************************************************************/
 /*                                                                  */
-/*   THREAD - Главный управляющий поток для сетевого интерфейса     */
-
-  DWORD WINAPI  TcpIface_Tread(LPVOID Pars)
-
-{
-        HWND  hDlg ;
-  Server_TCP  server ;
-         int  status ;
-
-#define    _TEST_LOG_MAX   500
-
-/*---------------------------------------------------- Инициализация */
-
-                     hDlg=hConsoleDialog ;
-
-/*------------------------------------- Настройка параметров сервера */
-
-                          __IP_port=atoi(__port) ;
-
-                server.mServer_port=__IP_port ;
-
-/*--------------------------------------------------- Запуск сервера */
-
-         status=server.ServerProcess() ;
-  
-/*------------------------------------------------ Завершение работы */
-
-//                  __tcp_stopped_flag=1 ;
-
-//             SendMessage(hMainDialog, WM_USER, _SRV_EXIT, NULL) ;   /* Запуск завершения приложения */
-
-/*-------------------------------------------------------------------*/
-                                    
-  return(0) ;
-}
-
-
-/*********************************************************************/
-/*                                                                   */
-/*                   THREAD - Обработчик данных клиента              */
-
-  DWORD WINAPI  Model_Process_Tread(LPVOID Pars)
-
-{
-         HWND  hDlg ;
-   SRV_client *client ;
-          int  status ;
-         char  command[2048] ;
-         char  text[1024] ;
-
-/*----------------------------------------------------------- Запуск */
-
-              hDlg= hConsoleDialog ;
-            client=(SRV_client *)Pars ;
-
-/*---------------------------------------------------- Моделирование */
-
-                              text[0]=0 ; 
-                           command[0]=0 ;
-
-          status=EM_process_model(&client->object, command, text) ;
-     if(text[0]!=0) {
-                        LB_INS_ROW(IDC_LOG, 0, text) ;
-                    } 
-
-                    client->processed=1 ;
-
-     if(status) {
-                    client->error=0 ;
-                       return(-1) ;
-                }
-/*---------------------------------------------- Формирование ответа */
-
-      EM_write_response(&client->object, command, client->result) ;
-
-                 client->processed=1 ;
-
-/*-------------------------------------------------------------------*/
-
-  return(0) ;
-}
-
-
-/********************************************************************/
-/*                                                                  */
 /*                      Считывание файла целей                      */
 
      int  EM_read_targets(char *path, int  file_flag)
@@ -1077,6 +965,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                       EM_message(text) ;
                            return(-1) ;
                        }
+
+         if(text[0]==']')  break ;
+
                  }
    else          {
 
@@ -1148,12 +1039,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
         if(i==2)         data.y     =strtod(value, &end) ;
         if(i==3)         data.z     =strtod(value, &end) ;
         if(i==4)  strcpy(data.type, value) ;  
-
-        if(!strcmp(data.name, "$END_OF_LIST$"))  break ;
-
                                      } 
-
-        if(!strcmp(data.name, "$END_OF_LIST$"))  break ;
 /*- - - - - - - - - - - - - - - - - - - - - - - - - Регистрация цели */
        if(__targets[__targets_cnt]==NULL)
             __targets[__targets_cnt]=(Object *)calloc(1, sizeof(Object)) ;
@@ -1261,14 +1147,14 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                                   } 
 /*-------------------------------------------- Разбор данных событий */
 /*- - - - - - - - - - - - - - - - - - - - - - - - -  Перебор событий */
-        array=strstr(text, "\"events\":{") ;
+        array=strstr(text, "\"events\":[") ;
      if(array==NULL) {
                          sprintf(text, "Events section missed") ;
                       EM_message(text) ;
                            return(-1) ;
                      }
 
-        array_end=strchr(array, '}') ;
+        array_end=strchr(array, ']') ;
      if(array_end==NULL) {
                              sprintf(text, "Events section terminator missed") ;
                           EM_message(text) ;
@@ -1279,10 +1165,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
    for(element=array ; ; element=element_end+1) {
 /*- - - - - - - - - - - - - - - - - - - - Выделение описания события */
-        element=strchr(element, '[') ;
+        element=strchr(element, '{') ;
      if(element==NULL)  break ;
 
-        element_end=strchr(element, ']') ;
+        element_end=strchr(element, '}') ;
      if(element_end==NULL) {
                              sprintf(text, "Event specifcation terminator missed") ;
                           EM_message(text) ;
@@ -1326,80 +1212,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
                   data->events_cnt++ ;
 
-                *element_end=']' ;
+                *element_end='}' ;
 /*- - - - - - - - - - - - - - - - - - - - - - - - -  Перебор событий */
                                                 }
 
-                  *array_end='}' ;
+                  *array_end=']' ;
 
-/*-------------------------------------------------------------------*/
-
-    return(0) ;
-}
-
-
-     int  EM_read_request2(char *path, Object *data, int  file_flag)
-
-{
-   FILE *file ;
-   char  text[8192] ;
-   char *key ;
-   char  value[128] ;
-   char *end ;
-    int  i ;
-
-  static  char *keys[]={"\"name\":\"", "\"t\":\"",
-                         NULL} ;
-
-/*------------------------------------------------ Извлечение данных */
-
-          memset(text, 0, sizeof(text)) ;
-
-   if(file_flag) {
-
-        file=fopen(path, "r") ;
-     if(file==NULL) {
-                           sprintf(text, "Request file open error %d : %s", errno, path) ;
-                        EM_message(text) ;
-                             return(-1) ;
-                    }
-
-           fread(text, 1, sizeof(text)-1, file) ;
-          fclose(file) ;
-
-                 }
-/*- - - - - - - - - - - - - - - - - -  Если источник данных - массив */
-   else          {
-                        strncpy(text, path, sizeof(text)-1) ;
-                 }
-/*---------------------------------------------------- Разбор данных */
-
-          memset(data, 0, sizeof(*data)) ;
-
-   for(i=0 ; keys[i]!=NULL ; i++) {
-
-        key=strstr(text, keys[i]) ;
-     if(key==NULL) {
-                         sprintf(text, "Parameter %s is missed", keys[i]) ;
-                      EM_message(text) ;
-                           return(-1) ;
-                   } 
-
-            memset(value, 0, sizeof(value)) ;
-           strncpy(value, key+strlen(keys[i]), sizeof(value)-1) ;
-        end=strchr(value, '"')  ;
-     if(end==NULL) {
-                         sprintf(text, "Invalid value for parameter %s", keys[i]) ;
-                      EM_message(text) ;
-                           return(-1) ;
-                   } 
-
-       *end=0 ;
-
-     if(i== 0)  strcpy(data->name, value) ;  
-     if(i== 1)         data->t    =strtol(value, &end, 10) ;
-
-                                  } 
 /*-------------------------------------------------------------------*/
 
     return(0) ;
@@ -1423,11 +1241,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
          memset(text, 0, sizeof(text)) ;
 
-        sprintf(value, "\"name\":\"%s\";\"t\":\"%ld\"\"\r\n", data->name, data->t) ;
+        sprintf(value, "{ \"name\":\"%s\",\"t\":\"%ld\"\",", data->name, data->t) ;
          strcat(text, value) ;  
-        sprintf(value, "\"x\":\"%.2lf\";\"y\":\"%.2lf\";\"z\":\"%.2lf\"\r\n", data->x, data->y, data->z) ;
+        sprintf(value, "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\",\r\n", data->x, data->y, data->z) ;
          strcat(text, value) ;  
-        sprintf(value, "\"commands\":{ %s }\r\n", command) ;
+        sprintf(value, "\"commands\":[ %s ]\r\n}\r\n", command) ;
          strcat(text, value) ;
 
 /*--------------------------------------------- Запись файла ответа */
@@ -1503,7 +1321,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
                     msg_cnt++ ;
 
-          sprintf(text, "[\"command\":\"sendmessage\",\"name\":\"%s-%d\",\"type\":\"%s\",\"kind\":\"%s\",\"recipient\":\"%s\",\"info\":\"%s\",\"delay\":\"%d\"]",
+          sprintf(text, "{\"command\":\"sendmessage\",\"name\":\"%s-%d\",\"type\":\"%s\",\"kind\":\"%s\",\"recipient\":\"%s\",\"info\":\"%s\",\"delay\":\"%d\"}",
                              sender->name, msg_cnt, type, kind, recipient, info, delay) ;
 
      if(command[0]!=0)  strcat(command, ",\r\n") ;
@@ -1511,425 +1329,3 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
    return(0) ;
 }
-
-
-/*********************************************************************/
-/*********************************************************************/
-/**							            **/
-/**             	КЛАСС - СЕРВЕР  		            **/
-/**							            **/
-/*********************************************************************/
-/*********************************************************************/
-
-
-/*********************************************************************/
-/*								     */
-/*	       Конструктор класса TCP-сервера			     */
-
-     Server_TCP::Server_TCP(void)
-
-{
-}
-
-
-/*********************************************************************/
-/*								     */
-/*	        Деструктор класса TCP-сервера			     */
-
-    Server_TCP::~Server_TCP(void)
-
-{
-}
-
-
-/*********************************************************************/
-/*								     */
-/*                Обработчик внешнего управления                     */
-
-   int  Server_TCP::vExternControl(void)
-{
-    int  i ;
-    int  j ;
-
-/*------------------------------------- Обработка команды завершения */
-
-  if(__exit_flag) {
-                        return(1) ;
-                  }
-/*---------------------------------- Обработка отсоединения клиентов */
-
-
-   for(i=0 ; i<__clients_cnt ; i++)                                 /* Удаляем клиентов */
-     if(__clients[i]->close_flag) {
-/*- - - - - - - - - - - - Останов потоков и освобождение их ресурсов */
-#define  _THREAD_HANGUP_TIME   600
-
-       if(__clients[i]->thread!=NULL) {                       
-
-         if( __clients[i]->thread_exit==0) {                        /* Если поток не остановился сам -     */ 
-          if(__clients[i]->close_time>                              /*   ждем некоторое время и            */
-                  time(NULL)-_THREAD_HANGUP_TIME)  continue ;       /*     останавливаем его принудительно */
-
-                     TerminateThread(__clients[i]->thread, 0) ;
-                                           }
-
-                         CloseHandle(__clients[i]->thread) ;
-                                      }         
-/*- - - - - - - - - - - - - -  Освобождение слотов в списке клиентов */
-                    free(__clients[i]) ;                            /*  Освобождение ресурсов клиента */
-                         __clients[i]=NULL ;
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-                                  }
-
-   for(i=0, j=0 ; i<__clients_cnt ; i++) {                          /* Поджимаем список клиентов */
-           if(          i !=  j )  __clients[j]=__clients[i] ;
-           if(__clients[i]!=NULL)            j++ ;
-                                         }
-
-                        __clients_cnt=j ;
-
-/*-------------------------------------------------------------------*/
-
-    return(0) ;
-}
-
-
-/*********************************************************************/
-/*								     */
-/*                  Отработка внешних событий                        */
-
-  int  Server_TCP::vExternal(SOCKET  socket) 
-
-{
-
-/*------------------------------------- Обработка команды завершения */
-
-  if(__exit_flag) {
-                        return(1) ;
-                  }
-/*-------------------------------------------------------------------*/
-   return(0) ;
-}
-
-
-/*********************************************************************/
-/*								     */
-/*                Закрытие соединения                                */
-
-   int  Server_TCP::vCloseConnect(void *connect_ptr)
-{  
-       SRV_client *client ;
-       Tcp_client *connect ;
-              int  i ;
-
-/*------------------------------------------------------ Подготовка */
-
-        connect=(Tcp_client *)connect_ptr ;
-
-/*----------------------------------------- Поиск клиента по списку */
-
-                                              client=NULL ;
-
-   for(i=0 ; i<__clients_cnt ; i++)  
-     if(__clients[i]->TCP_client==connect) {  client=__clients[i] ; 
-                                                    break ;         }
-
-     if(client==NULL)  return(0) ;
-
-/*------------------------------------- Пометка клиента на удаление */
-
-                   client->TCP_client=NULL ;
-                   client->close_flag=  1 ;
-                   client->close_time=time(NULL) ;
-
-/*------------------------------- Освобождение ресурсов процессоров */
-
-                    SetEvent(client->hEvent) ;                     /* Подымаем событие */
-                 CloseHandle(client->hEvent) ;
-
-/*------------------------------------------------------------------*/
-
-    return(0) ;
-}
-
-
-/*********************************************************************/
-/*                                                                   */
-/*                Обработка полученных данных                        */
-/*                                                                   */
-/*   Структура сообщений:                                            */
-/*      START:<...>   - инициализация контекста объекта              */
-/*      TARGETS:<...> - данные по целям                              */
-/*      STEP:<...>    - запуск шага расчета объекта                  */
-/*      GET:<...>     - запрос результатов расчета объекта           */
-
-   int  Server_TCP::vProcessData(Tcp_job *job, void *connect_ptr)
-{  
-          HWND  hDlg ;
-        time_t  time_0 ;
-     struct tm *hhmmss ;
-           int  status ;  
-        Object  data ;
-    SRV_client *client ;
-          char  prefix[128] ;
-          char  text[1024] ;
-           int  rows_cnt ;
-           int  i ;
-
-  static  char *buff ;
-  
-#define  _BUFF_SIZE  512000
-
-/*--------------------------------------- Формирование префикса лога */
-
-                             time(&time_0) ;
-                 hhmmss=localtime(&time_0) ;
-
-          sprintf(prefix, "%02d.%02d %02d:%02d:%02d ",
-                                    hhmmss->tm_mday,
-                                    hhmmss->tm_mon+1,
-                                    hhmmss->tm_hour,
-                                    hhmmss->tm_min,    
-                                    hhmmss->tm_sec  ) ;
-
-/*------------------------------------------------ Очистка окна лога */
-
-              hDlg= hConsoleDialog ;
-
-            rows_cnt=LB_GET_COUNT(IDC_LOG) ;
-         if(rows_cnt>_TEST_LOG_MAX+10) {
-
-               for(i=_TEST_LOG_MAX ; i<rows_cnt ; i++)  LB_DEL_ROW(IDC_LOG, i) ;
-                                       }
-/*---------------------------------------------------- Инициализация */
-
-    if(buff==NULL)  buff=(char *)calloc(1, _BUFF_SIZE) ;
-
-/*--------------------------------------------- Извлечение сообщения */
-
-            buff[_BUFF_SIZE-1]=0 ;
-
-       strncpy(buff, job->packet.data_in.c_str(), _BUFF_SIZE-1) ;
-
-/*---------------------------------------------- Обработка сообщения */
-
-   do {
-
-/*------------------------------------------ Инициализация контекста */
-
-#define  _KEY  "START:"
-     if(!memicmp(buff, _KEY, strlen(_KEY))) {
-
-        for(i=0 ; i<__clients_cnt ; i++) {
-
-                __clients[i]->object.t =-1 ;
-                __clients[i]->processed= 0 ;
-                __clients[i]->use_flag = 0 ;
-
-                                         }
-
-                       strcpy(buff, "SUCCESS") ;  
-
-                                            }
-#undef   _KEY
-
-/*-------------------------------------------------- Список объектов */
-
-#define  _KEY  "TARGETS:"
-     else
-     if(!memicmp(buff, _KEY, strlen(_KEY))) {
-
-             status=EM_read_targets(buff+strlen(_KEY), 0) ;
-          if(status) {
-                           strcpy(buff, "ERROR:Targets data error") ;                 
-                          sprintf(text, "ERROR - Targets data parse error %d", status) ;
-                       EM_message(text) ;
-                     }
-
-                        strcpy(buff, "SUCCESS") ;  
-
-                                            }
-#undef   _KEY
-
-/*-------------------------------------------------- Запуск рассчета */
-
-#define  _KEY  "STEP:"
-     else
-     if(!memicmp(buff, _KEY, strlen(_KEY))) {
-/*- - - - - - - - - - - - - - - - - - - - - -  Разбор данных запроса */
-              status=EM_read_request(buff+strlen(_KEY), &data, 0) ;
-          if(status) {
-                           strcpy(buff, "ERROR:Object data error") ;
-                          sprintf(text, "ERROR - Object data parse error %d", status) ;
-                       EM_message(text) ;
-                              break ;
-                     }
-
-           sprintf(text, "%s - Object request detected: name=%s  type=%s  t=%ld", prefix, data.name, data.type, data.t) ;
-        LB_INS_ROW(IDC_LOG, 0, text) ;
-/*- - - - - - - - - - - - - - - - - -  Контроль готовности контекста */
-          if(__targets_time!=data.t) {
-                         strcpy(buff, "ERROR:No targets data for this step") ;
-                        sprintf(text, "ERROR - No targets data for this step") ;
-                     EM_message(text) ;
-                                           break ;
-                                     }
-/*- - - - - - - - - - - - - - - - - - - - - - -  Определение клиента */
-                       client=NULL ;
-
-        for(i=0 ; i<__clients_cnt ; i++)
-          if(!stricmp(__clients[i]->object.name, data.name)) {
-                         client          =__clients[i] ;
-                         client->use_flag=   1 ;
-                                  break ;
-                                                             }
-/*- - - - - - - - - - - - - - - - - - - -  Добавление нового клиента */
-       if(client==NULL) {
-
-          for(i=0 ; i<__clients_cnt ; i++)
-            if(__clients[i]->use_flag==0) {  client=__clients[i] ;  break ;  }
-
-         if(client==NULL) {
-                            client=(SRV_client *)calloc(1, sizeof(SRV_client)) ;
-                            client->object.t=-1 ;
-
-                 __clients=(SRV_client **)realloc(__clients, (__clients_cnt+1)*sizeof(__clients[0])) ;
-
-                 __clients[__clients_cnt]=client ;
-                           __clients_cnt++ ;
-                          }
-
-                            client->use_flag=1 ;                    /* Отмечаем слот как занятый */ 
-                        }
-/*- - - - - - - - - - - - - - - - - - - - -  Контроль точки рассчета */
-          if(client->object.t> data.t) {
-                         strcpy(buff, "ERROR: Step time expired") ;
-                        sprintf(text, "ERROR - Step time expired") ;
-                     EM_message(text) ;
-                            break ;
-                                       }
-          if(client->object.t==data.t) {
-                         strcpy(buff, "WARNING: Dublicated request") ;
-                        sprintf(text, "WARNING - Dublicated request") ;
-                     EM_message(text) ;
-                            break ;
-                                       }
-/*- - - - - - - - - - - - - - - - - -  Запуск потока расчета объекта */
-       client->object   =data ;
-       client->processed= 0 ;
-       client->error    = 0 ;
-       client->thread   =CreateThread(  NULL, 0, Model_Process_Tread, 
-                                      client, 0, &client->thread_id  ) ;
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-                strcpy(buff, "SUCCESS") ;
-                                            }
-#undef   _KEY
-
-/*-------------------------------------- Запрос результатов рассчета */
-
-#define  _KEY  "GET:"
-     else
-     if(!memicmp(buff, _KEY, strlen(_KEY))) {
-/*- - - - - - - - - - - - - - - - - - - - - -  Разбор данных запроса */
-              status=EM_read_request2(buff+strlen(_KEY), &data, 0) ;
-          if(status) {
-                           strcpy(buff, "ERROR:Object data error") ;
-                          sprintf(text, "ERROR - Object data parse error %d", status) ;
-                       EM_message(text) ;
-                              break ;
-                     }
-/*- - - - - - - - - - - - - - - - - - - - - - -  Определение клиента */
-                       client=NULL ;
-
-        for(i=0 ; i<__clients_cnt ; i++)
-          if(!stricmp(__clients[i]->object.name, data.name) &&
-                      __clients[i]->use_flag== 1              ) {
-                       client=__clients[i] ;
-                                  break ;
-                                                                }  
-
-          if(client==NULL) {
-                              strcpy(buff, "ERROR:Unknown object") ;
-                             sprintf(text, "ERROR - Unknown object") ;
-                          EM_message(text) ;
-                                    break ;
-                           }
-/*- - - - - - - - - - - - - - - - - - Проверка готовности результата */
-          if(client->object.t!=data.t) {
-                         strcpy(buff, "ERROR:Step desynchronization") ;
-                        sprintf(text, "ERROR - Step desynchronization") ;
-                     EM_message(text) ;
-                            break ;
-                                        }
-          if(client->processed==0) {
-                         strcpy(buff, "WARNING:Step in progress") ;
-                            break ;
-                                   }
-/*- - - - - - - - - - - - - - - - - - - - - - - -  Выдача результата */
-          if(client->error!=0)  sprintf(buff, "ERROR:Step processing error") ;
-          else                  sprintf(buff, "SUCCESS:%s", client->result) ;
-/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-                                            }
-#undef   _KEY
-
-/*---------------------------------------------- Неизвестная команда */
-
-     else                                   {
-
-            job->packet.data_out.assign("ERROR:Unknown request") ;
-                       return(0) ;
-                                            }
-/*---------------------------------------------- Обработка сообщения */
-
-      } while(0) ;
-
-/*---------------------------------------------- Формирование ответа */
-
-              job->packet.data_out.assign(buff) ;
-
-/*-------------------------------------------------------------------*/
-
-#undef   _BUFF_SIZE
-
-    return(0) ;
-}
-
-
-/*********************************************************************/
-/*								     */
-/*	           Ведение лога обмена                               */
-
-  int  Server_TCP::vMessagesLog( Tcp_client *client, 
-                                std::string *message, 
-                                       char *module  )
-{
-#ifdef _REMARK
-
-  char  path[512] ;
-  FILE *file ;
-  char  msg[128] ;
-  char  text[4096] ;
-
-
-     if(!__msg_log_flag      &&
-        !__debug_session_flag  )  return(0) ;
-
-          sprintf(path, "%s\\details.log", __msg_log_path) ;
-       file=fopen(path, "a") ;
-    if(file==NULL)  return(0) ;
-
-           memset(msg,            0,     sizeof(msg)  ) ;
-          strncpy(msg, message->c_str(), sizeof(msg)-1) ;
-
-          sprintf(text, "IP:%s Socket:%5d %14.14s>> %s\n",
-                          client->ip,
-                          client->socket, module, msg) ;
-           fwrite(text,         1, strlen(text), file) ;
-           fclose(file) ;
-
-#endif
-                       
-   return(0) ;
-}
-
-
