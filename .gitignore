@@ -12,3 +12,5 @@
 /ExternalModel_C++/*.aps
 /.vs
 /C_Dcl/Debug
+/tcp_lib/x64/Debug
+/tcp_lib/x64/Release

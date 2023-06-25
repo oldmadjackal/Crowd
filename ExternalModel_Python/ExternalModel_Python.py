@@ -5,7 +5,10 @@ import time
 import os
 import json
 import math
-import glob 
+import glob
+
+import flask
+
 #
 #  Глобальные переменные - настройки интерфейса
 # 
@@ -13,6 +16,8 @@ __title         =""
 __control_folder=""  # Обменная папка
 __object_name   =""  # Интерфейсное имя управляемого объекта или *
 __targets_path  =""  # Файл со списком агентов сцены
+
+__port          =""  # Номер порта сетевого интерфейса, если не задан - используется файловый интерфейс
 
 #
 #  Глобальные переменные - настройки модели
@@ -43,6 +48,7 @@ def read_config(path) :
     global  __control_folder
     global  __object_name
     global  __targets_path
+    global  __port
     global  __agent_step
 
     try :
@@ -59,6 +65,7 @@ def read_config(path) :
         elif words[0]=="ControlFolder" :   __control_folder=words[1]
         elif words[0]=="Object"        :    __object_name  =words[1]
         elif words[0]=="Targets"       :   __targets_path  =words[1]
+        elif words[0]=="Port"          :      __port       =words[1]
         elif words[0]=="Step"          :     __agent_step  =words[1]
         else  :
             print("Unknown key in configuration file : ", words[0])
@@ -106,19 +113,25 @@ def read_targets(path) :
 
     return 0
 #------------------------------------
-#  Считывание файла списка объектов сцены
+#  Формирование ответа
 #------------------------------------ 
-def write_response(path) :
+def form_response() :
     global  __object
     global  __commands
 
+    response ="{ \"name\":\"" + __object["name"] + "\",\"t\":\"" + __object["t"] + "\","
+    response+="\"x\":\"" + __object["x"] + "\",\"y\":\"" + __object["y"] + "\",\"z\":\"" + __object["z"] + "\"," 
+    response+="\"commands\":[ " + __commands['commands'] + " ]}" ;
+
+    return response
+#------------------------------------
+#  Формирование файла ответа
+#------------------------------------ 
+def write_response(path, response) :
+
     try :
         file=open(path, "w")
-
-        file.write("{ \"name\":\"" + __object["name"] + "\",\"t\":\"" + __object["t"] + "\",")
-        file.write("\"x\":\"" + __object["x"] + "\",\"y\":\"" + __object["y"] + "\",\"z\":\"" + __object["z"] + "\",\r\n") 
-        file.write("\"commands\":[ " + __commands['commands'] + " ]\r\n}\r\n") ;
-
+        file.write(response)
         file.close
     except OSError :
         print("Response file write error : " + path)
@@ -140,7 +153,7 @@ def send_message(msg_type:str, kind:str, recipient:str, info:str, delay:int) :
     command+="\"kind\":\"" + kind + "\","
     command+="\"recipient\":\"" + recipient + "\","
     command+="\"info\":\"" + info + "\","
-    command+="\"delay\":\"" + str(delay) + "\"}\r\n"
+    command+="\"delay\":\"" + str(delay) + "\"}"
 
     if len(__commands['commands'])>0 : __commands['commands']+=","
 
@@ -164,7 +177,7 @@ def agent() :
         x_o=float(__object['x'])
         y_o=float(__object['y'])
         x_s=float(__targets[event['sender']]['x'])
-        y_s=float(__targets[event['sender']]['x'])
+        y_s=float(__targets[event['sender']]['y'])
         r  =math.sqrt( (x_o-x_s)**2+(y_o-y_s)**2 )
         a  =math.atan2(y_o-y_s, x_o-x_s)
 
@@ -183,19 +196,65 @@ def agent() :
 #
 
 #
+# Настройка сетевого интерфейса
+
+app = flask.Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def api():
+    global __object
+    global __targets
+    global __targets_time
+
+    request =flask.request.data.decode('UTF-8')
+    data=json.loads(request)
+
+    if data['method']=="targets":             # targets - Получение списка агентов сцены
+
+        for target in data['objects'] :
+            __targets[target['name']]=target
+
+        __targets_time=data["t"]
+
+        response="{ \"result\":\"success\" }"
+
+    elif data['method']=="start":             # start - Запуск расчета агента
+
+        __object=data
+        agent()
+        response="{ \"result\":\"success\" }"
+
+    elif data['method']=="get":               # get - Получение результата расчета
+
+        response=form_response()
+
+    else :                                    # Неизвестная команда
+        response="{ \"result\":\"error\", \"details\":\"Unknown method\" }"
+
+    return response
+
+@app.route('/hello', methods=['GET', 'POST'])
+def hello():
+    return "Hello Python!"
+
+#
 # Инициализация
 __commands['messages_cnt']=0
 #
 # Чтение конфигурационного файла
 if len(sys.argv) < 2 :
         print("Configuration file is missed")
-#       path="D:\\_Projects\\MGTU\\Crowd\\x64\\Debug\\Tests\\ExtAgent.cfg"
-        sys.exit(1)
+#        sys.exit(1)
 
-path=sys.argv[1]
+path="D:\\_Projects\\MGTU\\Crowd\\x64\\Debug\\Tests\\ExtAgent.cfg"
+#path=sys.argv[1]
 
 status=read_config(path)
 if status!=0 : sys.exit(2)
+
+if __port!="" :
+    if __name__ == '__main__' : app.run('localhost', 4449)
+    sys.exit(0)
 #
 # ГЛАВНЫЙ ЦИКЛ ОЖИДАНИЯ И ИСПОЛНЕНИЯ
 #
@@ -232,7 +291,8 @@ while(True):
     agent()
 #
 # Формирование ответа
-    status=write_response(__control_folder + "\\" + object_name + ".in")
+    response=form_response()
+    status=write_response(__control_folder + "\\" + object_name + ".in", response)
     if status!=0 : break
 #
 # Формирование флаг-файла готовности ответа

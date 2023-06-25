@@ -93,11 +93,22 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
-   char  ClassName[512] ;
-    MSG  SysMessage ;
-   char  text[512] ;
-    int  i ;
+         WORD  version ;
+      WSADATA  winsock_data ;        /* Данные системы WINSOCK */
+         char  ClassName[512] ;
+          MSG  SysMessage ;
+         char  text[512] ;
+          int  status ;
+          int  i ;
 
+/*------------------------------------------ Инициализация стека TCP */
+
+                          version=MAKEWORD(1, 1) ;
+        status=WSAStartup(version, &winsock_data) ;                 /* Иниц. Win-Sockets */
+     if(status) {
+                           sprintf(text, "Win-socket DLL loading error: %d", WSAGetLastError()) ;
+                   CrowdRoot_error(text, MB_ICONERROR) ;
+                }
 /*------------------------------------- Определение рабочего раздела */
 
                    getcwd(__cwd, sizeof(__cwd)) ;
@@ -207,6 +218,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
         UnregisterClass(ClassName, GetModuleHandle(NULL)) ;
 
             CloseHandle(hCommandEnd) ;
+
+/*------------------------------------------- Освобождение стека TCP */
+
+                 WSACleanup() ;
 
 /*-------------------------------------------------------------------*/
 

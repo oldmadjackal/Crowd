@@ -63,6 +63,8 @@ struct Crowd_Object_ExternalLink {
                         int  SendRequest    (long) ;                                    /* Формирование и отправка запроса на обработку */ 
                         int  WaitResponse   (long) ;                                    /* Ожидaние результата обработки */ 
 
+                        int  TCP_send       (char *, int) ;                             /* Обмен данными с агентом по сетевому протоколу */
+
 	                     Crowd_Object_External() ;           /* Конструктор */
 	                    ~Crowd_Object_External() ;           /* Деструктор */
                                                        } ;
@@ -115,6 +117,7 @@ struct Crowd_Object_ExternalLink {
 /*--------------------------------------------- Диалоговые процедуты */
 
 /* Файл  O_External.cpp */
+    int  Object_External_Http_receive(char *, int) ;     /* Функция управления приемом для HTTP */
 
 /* Файл  O_External_dialog.cpp */
   INT_PTR CALLBACK  Object_External_Help_dialog   (HWND, UINT, WPARAM, LPARAM) ;

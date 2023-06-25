@@ -19,6 +19,8 @@
 #include "..\Crowd_Object\Crowd_Object.h"
 #include "..\Crowd_Kernel\Crowd_Kernel.h"
 #include "..\F_Show\F_Show.h"
+#include "..\tcp_lib\exh.h"
+#include "..\tcp_lib\tcp.h"
 
 #include "O_External.h"
 
@@ -29,6 +31,7 @@
 #define  SEND_ERROR(text)    SendMessage(Crowd_Kernel::kernel_wnd, WM_USER,  \
                                          (WPARAM)_USER_ERROR_MESSAGE,        \
                                          (LPARAM) text)
+
 
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call,
@@ -1496,8 +1499,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
      int  Crowd_Object_External::vEventStart(void)
 {
-   char  name[FILENAME_MAX] ;
-   char  flag[FILENAME_MAX] ;
+         char  name[FILENAME_MAX] ;
+         char  flag[FILENAME_MAX] ;
 
 /*--------------------------------- Инициализация накопителя событий */
 
@@ -1689,6 +1692,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 {
         FILE *file ;
         char  text[4096] ;
+         int  status ;
          int  i ;
 
 /*------------------------------------- Формирование списка объектов */
@@ -1707,7 +1711,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
                           *targets=0 ;
 
-        sprintf(text, "{ \"t\":\"%ld\",\"objects\":[\r\n", t) ;
+        sprintf(text, "{  \"method\":\"targets\",\"t\":\"%ld\",\"objects\":[\r\n", t) ;
          strcat(targets, text) ;  
 
        for(i=0 ; i<OBJECTS_CNT ; i++) {
@@ -1770,6 +1774,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*- - - - - - - - - - -  Отправка запроса через интерфейс TCP-SERVER */
    if(!stricmp(this->iface_type, "TCP-SERVER")) {
 
+         status=TCP_send(targets, strlen(targets)+1) ;
+      if(status)  return(-1) ;
+
                                                 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
       } while(0) ;
@@ -1791,12 +1798,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
           char  path[FILENAME_MAX] ;
           FILE *file ;
           char  value[128] ;
+           int  status ;
            int  i ; 
 
   static  char *text ;
 
 #undef   _BUFF_MAX
-#define  _BUFF_MAX  128000
+#define  _BUFF_MAX  32000
 
 /*---------------------------------------------------- Инициализация */
 
@@ -1806,7 +1814,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
          memset(text, 0, _BUFF_MAX) ;
 
-         strcat(text, "{");
+         strcat(text, "{ \"method\":\"start\",");
         sprintf(value, "\"name\":\"%s\",\"t\":\"%ld\",", this->Name, t) ;
          strcat(text, value) ;  
         sprintf(value, "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\",", this->x_base, this->y_base, this->z_base) ;
@@ -1878,6 +1886,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
    if(!stricmp(this->iface_type, "TCP-SERVER")) {
 
+         status=TCP_send(text, _BUFF_MAX-1) ;
+      if(status)  return(-1) ;
 
                                                 }
 /*-------------------------------------------------------------------*/
@@ -1904,7 +1914,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             int  status ;
            char  command[128] ;
            char  value[1024] ;
-           char  text[4096] ;
            char  term ;
            char *cmd ;
            char *cmd_end ;
@@ -1935,6 +1944,15 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                            "\"delay\":\"",
                             NULL} ;
 
+  static  char *text ;
+
+#undef   _BUFF_MAX
+#define  _BUFF_MAX  32000
+
+/*---------------------------------------------------- Инициализация */
+
+    if(text==NULL)  text=(char *)calloc(_BUFF_MAX, 1) ;
+
 /*-------------------------------------- Ожидание результата расчета */
 
    do {
@@ -1956,8 +1974,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                             return(-1) ;
                      }
 
-             memset(text, 0, sizeof(text)) ;
-              fread(text, 1, sizeof(text)-1, file) ;
+             memset(text, 0, sizeof(_BUFF_MAX)) ;
+              fread(text, 1, sizeof(_BUFF_MAX)-1, file) ;
              fclose(file) ;
 
         status=unlink(flag) ;
@@ -1972,6 +1990,17 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*- - - - - - - - - - -  Отправка запроса через интерфейс TCP-SERVER */
    if(!stricmp(this->iface_type, "TCP-SERVER")) {
 
+         memset(text, 0, _BUFF_MAX) ;
+
+         strcat(text, "{ \"method\":\"get\",");
+        sprintf(value, "\"name\":\"%s\",\"t\":\"%ld\",\"type\":\"%s\"", this->Name, t, this->object_type) ;
+         strcat(text, value) ;  
+         strcat(text, " }");
+
+         status=TCP_send(text, _BUFF_MAX-1) ;
+      if(status)  return(-1) ;
+
+      if(strstr(text, "\"result\":\"wait\"")==NULL)  break ;
                                                 }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
              Sleep(10) ;
@@ -2150,3 +2179,201 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
      return(0) ;
 }
+
+
+/*********************************************************************/
+/*                                                                   */
+/*           Обмен данными с узлом по сетевому протоколу             */
+
+  int  Crowd_Object_External::TCP_send(char *text, int size)
+
+{
+               Tcp  Transport ;
+              char  url[512] ;
+              char *port ;
+              char  error[512] ;
+              char *result ;
+              char *end ;
+               int  status ;
+               int  cnt ;
+               int  i, j ;
+
+      static  char *buff ;
+
+#undef  _BUFF_MAX
+#define _BUFF_MAX   128000
+
+/*---------------------------------------------------- Инициализация */
+
+     if(buff==NULL)  buff=(char *)calloc(1, _BUFF_MAX) ;
+
+/*-------------------------------------------- Канонизация сообщения */
+
+     for(i=0, j=0 ; text[i] ; i++) {
+
+          text[j]=text[i] ;
+
+       if(text[i]!='\r' &&
+          text[i]!='\n'   )  j++ ;
+                                   }
+
+          text[j]=0 ;
+
+/*-------------------------------------------- Раскладка URL сервера */
+
+             memset(url,    0, sizeof(url)  ) ;
+            strncpy(url, this->iface_tcp_connect, sizeof(url)-1) ;
+        port=strchr(url, ':')  ;
+     if(port==NULL) {
+                       sprintf(error, "Формат URL: <host>:<port>") ;
+                    SEND_ERROR(error) ;
+                          return(-1) ;
+                    }
+
+       *port=0 ;
+        port++ ;
+
+/*-------------------------------------------- Соединение с сервером */
+
+              Transport.mServer_name=url ;
+              Transport.mServer_port=strtoul(port, &end, 10) ;
+ 
+   if(*end!=0) {
+                     sprintf(error, "Формат URL - некорректный номер порта") ;
+                  SEND_ERROR(error) ;
+                        return(-1) ;
+               }
+
+      status=Transport.LinkToServer() ;
+   if(status) {
+                     sprintf(error, "Ошибка соединения с сервером %s по порту %s : %d", url, port, status) ;
+                  SEND_ERROR(error) ;
+                        return(-1) ;
+              } 
+/*---------------------------------------- Формирование HTTP-запроса */
+
+        sprintf(buff, "POST / HTTP/1.0\r\n"
+                      "Host: %s\r\n"
+//                                "Accept: application/json\r\n"
+                      "Content-Type: application/json; charset=UTF-8\r\n"
+                      "Content-Length: %d\r\n"
+                      "\r\n%s",
+                         url, (int)strlen(text), text) ;
+
+/*------------------------------------------------- Отправка запроса */
+
+      cnt=Transport.iSend(Transport.mSocket_cli,                    /* Передаем запрос */ 
+                               buff, strlen(buff), _WAIT_RECV) ;
+   if(cnt==SOCKET_ERROR) {                                          /* Если ошибка... */
+                                  sprintf(error, "Request send error - %d", WSAGetLastError()) ;
+                               SEND_ERROR(error) ;
+                                     return(-1) ;
+                         }
+/*----------------------------------------------------- Прием ответа */
+
+                        memset(buff, 0, _BUFF_MAX) ;                /* Очищаем приемный буфер */
+                                    cnt=_BUFF_MAX ;
+
+          Transport.mReceiveCallback=Object_External_Http_receive ; /* Задаем управляющую функцию приема */
+
+      cnt=Transport.iReceive(Transport.mSocket_cli,                 /* Принимаем ответ */ 
+                                    buff, cnt-1, _WAIT_RECV) ;
+
+          Transport.mReceiveCallback=NULL ;
+
+   if(cnt==SOCKET_ERROR) {                                          /* Если ошибка */
+                                  sprintf(error, "Reply receive error - %d", WSAGetLastError()) ;
+                               SEND_ERROR(error) ;
+                                     return(-1) ;
+                         }
+/*------------------------------------------- Выдача ответа на выход */
+
+                        result=strchr(buff, '{') ;
+      if(result==NULL)  result=       buff ;
+
+            strncpy(text, result, size-1) ;
+
+/*-------------------------------------------- Завершение соединения */
+
+                    Transport.ClientClose() ;
+
+/*-------------------------------------------------------------------*/
+
+   return(0) ;
+}
+
+
+/*********************************************************************/
+/*								     */
+/*                Функция управления приемом для HTTP                */
+
+   int  Object_External_Http_receive(char *data, int  data_size)
+
+{
+   char  work[8192] ;
+   char *entry ;
+   char *content ;
+   char *end ;
+    int  size ;
+    int  cnt ;
+    int  i ;
+
+/*------------------------------------------ Выделение первой строки */
+
+               memset(work, 0, sizeof(work)) ;                      /* Выделяем HTTP-заголовок */
+
+        if(data_size<sizeof(work))  size=data_size ;
+        else                        size=sizeof(work)-1 ;
+
+              strncpy(work, data, size) ;
+
+       content=strstr(work, "\r\n\r\n") ;                           /* Ищем вход контента */
+
+           end=strchr(work, '\n') ;                                 /* Выделяем первую строку */
+        if(end!=NULL)  *end=0 ;
+
+/*---------------------------------------------------------- Если OK */
+
+   if(strstr(work, " 200 OK")!=NULL) {
+
+        if(end!=NULL)  *end='\n' ;                                  /* Восстанавливаем данные */
+      
+        if(content==NULL)  return(0) ;                              /* Если нет разделителя контента... */
+ 
+          *content = 0 ;                                            /* Отсекаем заголовок */
+           content+= 4 ;                                            /* Проходим на контент */
+
+                 strupr(work) ;                                     /* Переводим заголовок в верхний регистр */
+           entry=strstr(work, "CONTENT-LENGTH:") ;                  /* Ищем вход аттрибута длины данных */
+        if(entry==NULL) {                                           /* При отсутствии явного размера данных -        */
+                                                                    /*  - определяем их завершение по json-контексту */
+         if(memchr(data, '}', data_size)==NULL)  return(0) ;
+
+          for(cnt=0, i=0 ; i<data_size ; i++)
+            if(data[i]=='{')  cnt++ ;
+            else 
+            if(data[i]=='}')  cnt-- ;
+
+                 if(cnt)  return(0) ;
+                          return(1) ;          
+                        }
+
+                         entry+=strlen("CONTENT-LENGTH:") ;
+            size=strtoul(entry, &end, 10) ;                         /* Извлекаем длину данных */
+
+        if( (data_size-(content-work))>=size )  return(1) ;         /* Если все данные получены - выходим */
+
+                                     }
+/*------------------------------------------------------ Если ошибка */
+
+   else                              {
+
+        if(content!=NULL)  return(1) ;                              /* Если есть разделитель контента... */
+
+                                     }
+/*-------------------------------------------------------------------*/
+
+   return(0) ;
+
+}
+
