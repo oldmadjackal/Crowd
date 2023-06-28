@@ -682,6 +682,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                 Sleep(1000*this->kernel->show_time_step) ;
 
                                         }
+/*----------------------------------- Фиксирование состояния агентов */
+
+     for(i=0 ; i<OBJECTS_CNT ; i++)  OBJECTS[i]->vEventSaveState() ;
+
 /*---------------------------------------------- Обработка сообщений */
 
      for(n=0 ; n<this->mQueue[0].cnt ; n++) {

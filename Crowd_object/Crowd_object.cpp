@@ -329,6 +329,20 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /********************************************************************/
 /*								    */
+/*                  Сохранение текущего состояния                   */
+
+     int  Crowd_Object::vEventSaveState(void)
+{
+        x_base_save=x_base ;
+        y_base_save=y_base ;
+        z_base_save=z_base ;
+
+  return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
 /*                   Обработка события                              */
 
      int  Crowd_Object::vEvent(long  t, char *type, void  *data, Crowd_Kernel *task)

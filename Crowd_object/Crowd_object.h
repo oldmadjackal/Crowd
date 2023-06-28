@@ -122,6 +122,10 @@
                      double  y_base_stack ;
                      double  z_base_stack ;
 
+                     double  x_base_save ;         /* Координаты базовой точки после предыдущего шага */
+                     double  y_base_save ;
+                     double  z_base_save ;
+
      struct Crowd_Parameter  *Parameters ;         /* Список параметров */
                         int   Parameters_cnt ;
 
@@ -161,6 +165,7 @@
    virtual                int  vSpecial        (char *, void *) ;        /* Специальные действия */
 
    virtual                int  vEventStart     (void) ;                  /* Подготовка обработки событий */
+   virtual                int  vEventSaveState (void) ;                  /* Сохранение текущего состояния  */
    virtual                int  vEvent          (long, char *,            /* Обработка события */
                                                       void *, Crowd_Kernel *) ;
    virtual                int  vEventShow      (void) ;                  /* Отображение результата обработки события */

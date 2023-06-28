@@ -1724,7 +1724,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                              "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\","
                              "\"type\":\"%s\"}\r\n",
                                 O->Name,
-                                O->x_base, O->y_base, O->z_base,
+                                O->x_base_save, O->y_base_save, O->z_base_save,
                                 O->Type ) ;
 
               strcat(targets, text) ;  
