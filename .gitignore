@@ -21,3 +21,12 @@
 /C_Std/Release
 /Crowd_feature/Debug
 /Crowd_feature/Release
+/Crowd_feature/x64
+/Crowd_kernel/Debug
+/Crowd_kernel/Release
+/Crowd_kernel/x64
+/Crowd_message/x64
+/Crowd_message/Debug
+/Crowd_message/Release
+/Crowd_model/Debug
+/Crowd_model/Release
