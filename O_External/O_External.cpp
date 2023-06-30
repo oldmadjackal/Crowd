@@ -1974,8 +1974,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                             return(-1) ;
                      }
 
-             memset(text, 0, sizeof(_BUFF_MAX)) ;
-              fread(text, 1, sizeof(_BUFF_MAX)-1, file) ;
+             memset(text, 0, _BUFF_MAX) ;
+              fread(text, 1, _BUFF_MAX-1, file) ;
              fclose(file) ;
 
         status=unlink(flag) ;

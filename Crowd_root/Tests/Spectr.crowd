@@ -39,11 +39,11 @@ man5 profile forget=3,penalty=5,sense1=-0.7,sense2=0.5,sense3=-0.5
 show
 
 external cr ext1 cube
-;ext1 itype FILE agent
-;ext1 ifile/f ext/senders
-;ext1 ifile/t ext/objects.dat
-ext1 itype TCP-SERVER agent
-ext1 itcp/u 127.0.0.1:4449
+ext1 itype FILE agent
+ext1 ifile/f ext/senders
+ext1 ifile/t ext/objects.dat
+;ext1 itype TCP-SERVER agent
+;ext1 itcp/u 127.0.0.1:4449
 
 
 broadcast create info_0 sender1 INFO spectr:1,0.4,0.7
