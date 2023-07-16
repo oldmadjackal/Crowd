@@ -1833,10 +1833,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
          strcat(text, value) ; 
         sprintf(value, "\"kind\":\"%s\", ", this->Communications[i]->Kind) ;
          strcat(text, value) ; 
-        sprintf(value, "\"color\":\"%d\", ", this->Communications[i]->Color) ;
-         strcat(text, value) ; 
-        sprintf(value, "\"visible\":\"%d\", ", this->Communications[i]->Visible) ;
-         strcat(text, value) ; 
         sprintf(value, "\"master\":\"%s\", ", this->Communications[i]->Object_m->Name==NULL ? "" : this->Communications[i]->Object_m->Name) ;
          strcat(text, value) ; 
         sprintf(value, "\"slave\":\"%s\" }\r\n", this->Communications[i]->Object_s->Name==NULL ? "" : this->Communications[i]->Object_s->Name) ;
@@ -1978,9 +1974,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
               fread(text, 1, _BUFF_MAX-1, file) ;
              fclose(file) ;
 
-        status=unlink(flag) ;
+                    status=unlink(flag) ;
       if(status) {
-                          sprintf(text, "ERROR - Response flag-file remove error %d : %s", errno, path) ;
+                            Sleep(100) ;
+                    status=unlink(flag) ;
+                 }
+      if(status) {
+                          sprintf(text, "ERROR - Response flag-file remove error %d : %s", errno, flag) ;
                        SEND_ERROR(text) ;
                             return(-1) ;
                  }

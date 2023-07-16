@@ -1,0 +1,4 @@
+LIBRARY O_Survey
+   EXPORTS
+         Identify   DATA
+	 GetEntry   DATA
