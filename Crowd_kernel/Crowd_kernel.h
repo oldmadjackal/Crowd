@@ -158,7 +158,7 @@ typedef  int (CALLBACK *Crowd_Kernel_CallBack)(int, void *)  ;
     static  Crowd_Message **kernel_messages ;         /* Список сообщений */
     static            int   kernel_messages_cnt ;
 
-    static     Crowd_Name  *kernel_names ;            /* Список связанных имен */
+    static     Crowd_Name **kernel_names ;            /* Список связанных имен */
     static            int   kernel_names_cnt ;
 
     static   Crowd_Kernel **feature_modules ;         /* Список модулей-свойств */

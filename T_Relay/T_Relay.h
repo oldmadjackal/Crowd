@@ -25,6 +25,12 @@
 
 #define  _QUEUE_DEEP   10000
 
+     struct  Crowd_MGas {
+                              char  kind[128] ;    /* Вид сообщения */ 
+                              char  sender[128] ;  /* Категория отправителя */ 
+                            double  price ;        /* Ресурсная стоимость */ 
+                        } ;
+
 /*----------------------- Описание класса задачи "Схема отображения" */
 
   class T_RELAY_API Crowd_Module_Relay : public Crowd_Kernel {
@@ -32,20 +38,24 @@
     public:
 
      static
-        struct Crowd_Module_Relay_instr *mInstrList ;                   /* Список команд */
+        struct Crowd_Module_Relay_instr  *mInstrList ;                  /* Список команд */
 
-     static               Crowd_MQueue  mQueue[_QUEUE_DEEP] ;           /* Очередь сообщений */
+     static               Crowd_MQueue   mQueue[_QUEUE_DEEP] ;          /* Очередь сообщений */
 
-     static                       HWND  mQueueDlg ;                     /* Окно отображения состояния очереди */
-     static                       HWND  mDebugDlg ;                     /* Окно отладки */
+     static                       HWND   mQueueDlg ;                    /* Окно отображения состояния очереди */
+     static                       HWND   mDebugDlg ;                    /* Окно отладки */
 
-     static                        int  mStateRegime ;                  /* Способ сохранения состояния объектов */
-#define                                   _MEMORY_STATE   0              /* Сохранение в памяти */
-#define                                     _FILE_STATE   1              /* Сохранение в файлах */
-#define                                      _LOG_STATE   2              /* Сохранение в памяти и в файлах - только на просмотр */
-     static                       char  mStateFolder[FILENAME_MAX] ;    /* Папка файлов состояний объектов */
+     static                        int   mStateRegime ;                 /* Способ сохранения состояния объектов */
+#define                                    _MEMORY_STATE   0             /* Сохранение в памяти */
+#define                                      _FILE_STATE   1             /* Сохранение в файлах */
+#define                                       _LOG_STATE   2             /* Сохранение в памяти и в файлах - только на просмотр */
+     static                       char   mStateFolder[FILENAME_MAX] ;   /* Папка файлов состояний объектов */
 
-     static                       long  mStep ;                         /* Номер шага моделирования */
+     static                       long   mStep ;                        /* Номер шага моделирования */
+
+     static                        int   mGasUse ;                      /* Режим учета расхода ресурсов при моделировании  */
+     static                 Crowd_MGas **mMsgPrices ;                   /* таблица стоимости отправки сообщений */
+     static                        int   mMsgPrices_cnt ;
 
     public:
      virtual         int  vGetParameter (char *, char *)   ;            /* Получить параметр */
@@ -61,6 +71,7 @@
                      int  cQueue        (char *, Crowd_IFace *) ;       /* Инструкция QUEUE */
                      int  cDebug        (char *, Crowd_IFace *) ;       /* Инструкция DEBUG */
                      int  cRun          (char *, Crowd_IFace *) ;       /* Инструкция RUN */
+                     int  cGas          (char *, Crowd_IFace *) ;       /* Инструкция GAS */
 
             Crowd_Object *FindObject    (char *) ;                      /* Поиск объекта по имени */ 
            Crowd_Message *FindMessage   (char *) ;                      /* Поиск сообщения по имени */ 

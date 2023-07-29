@@ -57,6 +57,7 @@
                      int  cMemory       (char *) ;              /* Инструкция MEMORY */
                      int  cSrand        (char *) ;              /* Инструкция SRAND */
                      int  cTime         (char *) ;              /* Инструкция TIME */
+                     int  cReference    (char *) ;              /* Инструкция REFERENCE */
 
                     void  ShowExecute   (char *) ;              /* Отображение данных */
 

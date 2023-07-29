@@ -95,6 +95,8 @@ struct Crowd_Object_ExternalLink {
                        int  cIType        (char *) ;             /* Инструкция ITYPE */
                        int  cIFile        (char *) ;             /* Инструкция IFILE */
                        int  cITcp         (char *) ;             /* Инструкция ITCP */
+                       int  cSender       (char *) ;             /* Инструкция SENDER */
+                       int  cGas          (char *) ;             /* Инструкция GAS */
 
      Crowd_Object_External *FindObject    (char *, int) ;        /* Поиск обьекта типа EXTERNAL по имени */
 

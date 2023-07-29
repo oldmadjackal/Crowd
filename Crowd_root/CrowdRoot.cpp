@@ -1605,6 +1605,9 @@ typedef  struct {
                          " TIME/C <Число> -  задание кванта времени рассчетов, в секундах\n"
                          " TIME/S <Число> -  задание кванта времени отображения, в секундах\n",
                          &Crowd_Module_Main::cTime    },
+ { "reference", "ref",  "# REFERENCE - регистрация элемента справочника", 
+                         " REFERENCE <Справочник> <Значение> - добавить в Справочник Значение \n",
+                         &Crowd_Module_Main::cReference    },
  {  NULL }
                                                             } ;
 
@@ -3152,6 +3155,102 @@ typedef  struct {
 /*-------------------------------------------------------------------*/
 
 #undef   _PARS_MAX    
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*								    */
+/*               Реализация инструкции REFERENCE                    */
+/*								    */
+/*    REFERENCE <Справочник> <Значение>                             */
+
+  int  Crowd_Module_Main::cReference(char *cmd) 
+
+{
+#define   _PARS_MAX  10 
+
+             char *pars[_PARS_MAX] ;
+             char *dict ;
+             char *name ;
+       Crowd_Name *elem ;
+             char *end ;
+              int  i ;
+
+/*---------------------------------------- Разборка командной строки */
+/*- - - - - - - - - - - - - - - - - - -  Выделение ключей управления */
+       if(*cmd=='/' ||
+          *cmd=='+'   ) {
+ 
+                if(*cmd=='/')  cmd++ ;
+
+                   end=strchr(cmd, ' ') ;
+                if(end==NULL) {
+                       SEND_ERROR("Некорректный формат команды") ;
+                                       return(-1) ;
+                              }
+                  *end=0 ;
+
+/*
+                if(strchr(cmd, 'c')!=NULL ||
+                   strchr(cmd, 'C')!=NULL   )  c_flag=1 ;
+           else if(strchr(cmd, 's')!=NULL ||
+                   strchr(cmd, 'S')!=NULL   )  s_flag=1 ;
+*/
+                           cmd=end+1 ;
+                        }
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+         dict=pars[0] ;
+         name=pars[1] ;
+
+      if(name==NULL) {
+                       SEND_ERROR("Недостаточно параметров: REFERENCE <Dictionary> <Element>") ;
+                                       return(-1) ;
+                     }
+/*------------------------------------- Проверка повторного значения */
+
+#define   NAMES       this->kernel->kernel_names 
+#define   NAMES_CNT   this->kernel->kernel_names_cnt 
+
+       for(i=0 ; i<NAMES_CNT ; i++)
+         if(!stricmp(NAMES[i]->module, dict) &&
+            !stricmp(NAMES[i]->name,   name)   ) {
+              SEND_ERROR("Елемент с таким именем уже включен в словарь") ;
+                                return(-1) ;
+                                                 }
+/*--------------------------------- Добавление значения в справочник */
+
+        elem=(Crowd_Name *)calloc(1, sizeof(*elem)) ;
+
+       NAMES=(Crowd_Name **)realloc(NAMES, (NAMES_CNT+1)*sizeof(*NAMES)) ;
+    if(NAMES==NULL) {
+                       SEND_ERROR("Переполнение памяти") ;
+                              return(-1) ;
+                    }
+
+                NAMES[NAMES_CNT]=elem ;
+                      NAMES_CNT++ ;
+
+          strcpy(elem->name,   name) ;
+          strcpy(elem->module, dict) ;
+
+/*-------------------------------------------------------------------*/
+
+#undef   NAMES
+#undef   NAMES_CNT
+
+#undef   _PARS_MAX
 
    return(0) ;
 }

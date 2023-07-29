@@ -109,7 +109,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                         "STATE/L <путь> - хранение в памяти и файлах - только для просмотра",
                        &Crowd_Module_Relay::cState    },
  { "prepare",    "p",  "#PREPARE (P) - подготовка стартовой сцены", 
-                        "PREPARE <имя сообщения> <временная зона> - поместить сообщение в очередь",
+                       " PREPARE <имя сообщения> <временная зона> - поместить сообщение в очередь",
                        &Crowd_Module_Relay::cPrepare    },
  { "queue",      "q",  "#QUEUE (Q) - показать очередь сообщений", 
                         NULL,
@@ -120,6 +120,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  { "run",        "r",  "#RUN (R) - запустить моделирование", 
                         NULL,
                        &Crowd_Module_Relay::cRun    },
+ { "gas",        "g",  "#GAS (G) - управление расходом ресурсов", 
+                       " GAS <1|0> \n"
+                       "   Включить/выключить учет расхода ресурсов при моделировании\n"
+                       " GAS/P <Вид сообщения> <Категория отправителя> <Стоимость>\n"
+                       "   Задание стоимости отправки сообщений определенного Вида для заданной Категории отправителей\n",
+                       &Crowd_Module_Relay::cGas    },
  {  NULL }
                                                                   } ;
 
@@ -128,17 +134,22 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*								    */
 /*		     Общие члены класса             		    */
 
-  struct Crowd_Module_Relay_instr *Crowd_Module_Relay::mInstrList=NULL ;
+  struct Crowd_Module_Relay_instr  *Crowd_Module_Relay::mInstrList=NULL ;
 
-  struct             Crowd_MQueue  Crowd_Module_Relay::mQueue[_QUEUE_DEEP] ;
+  struct             Crowd_MQueue   Crowd_Module_Relay::mQueue[_QUEUE_DEEP] ;
 
-                             HWND  Crowd_Module_Relay::mQueueDlg ;
-                             HWND  Crowd_Module_Relay::mDebugDlg ;
+                             HWND   Crowd_Module_Relay::mQueueDlg ;
+                             HWND   Crowd_Module_Relay::mDebugDlg ;
 
-                              int  Crowd_Module_Relay::mStateRegime ;
-                             char  Crowd_Module_Relay::mStateFolder[FILENAME_MAX] ;
+                              int   Crowd_Module_Relay::mStateRegime ;
+                             char   Crowd_Module_Relay::mStateFolder[FILENAME_MAX] ;
 
-                             long  Crowd_Module_Relay::mStep ;
+                             long   Crowd_Module_Relay::mStep ;
+
+                              int   Crowd_Module_Relay::mGasUse       =  0 ;
+                       Crowd_MGas **Crowd_Module_Relay::mMsgPrices    =NULL ;
+                              int   Crowd_Module_Relay::mMsgPrices_cnt=  0 ;
+
 
 /********************************************************************/
 /*								    */
@@ -594,6 +605,175 @@ BOOL APIENTRY DllMain( HANDLE hModule,
       DialogBoxIndirect(GetModuleHandle(NULL),
 			(LPCDLGTEMPLATE)Resource("IDD_DEBUG", RT_DIALOG),
 			   GetActiveWindow(), Task_Relay_Debug_dialog) ;
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*                                                                  */
+/*                    Реализация инструкции GAS                     */
+/*                                                                  */
+/*   GAS    <Режим учета>                                           */
+/*   GAS/P  <Вид сообщения> <Категория отправителя> <Стоимость>     */
+
+  int  Crowd_Module_Relay::cGas(char *cmd, Crowd_IFace *iface)
+
+{
+#define   _PARS_MAX  10
+
+                   char  *pars[_PARS_MAX] ;
+                    int   p_flag ;
+                   char  *kind ;
+                   char  *sender ;
+                 double   value ;
+             Crowd_MGas  *price ;
+                   char  *end ;
+                    int   i ;
+
+/*---------------------------------------- Разборка командной строки */
+/*- - - - - - - - - - - - - - - - - - -  Выделение ключей управления */
+                      p_flag=0 ;
+
+       if(*cmd=='/' ||
+          *cmd=='+'   ) {
+ 
+                if(*cmd=='/')  cmd++ ;
+
+                   end=strchr(cmd, ' ') ;
+                if(end==NULL) {
+                       SEND_ERROR("Некорректный формат команды") ;
+                                       return(-1) ;
+                              }
+                  *end=0 ;
+
+                if(strchr(cmd, 'p')!=NULL ||
+                   strchr(cmd, 'P')!=NULL   )  p_flag=1 ;
+//         else if(strchr(cmd, 'r')!=NULL ||
+//                 strchr(cmd, 'R')!=NULL   )  r_flag=1 ;
+
+                           cmd=end+1 ;
+                        }
+
+/*
+       if(m_flag+r_flag!=1) {
+                      SEND_ERROR("Может быть только один из ключей: M или R. \n"
+                                 "Например: GAS/M <Имя_объекта> ...") ;
+                                           return(-1) ;
+                            }
+*/
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+/*------------------------------------------- Задание цены сообщения */
+
+   if(p_flag) {
+
+     if(pars[2]==NULL) {
+                           SEND_ERROR("Некорректный формат: GAS/P <Вид сообщения> <Категория отправителя> <Стоимость>") ;
+                                 return(-1) ;
+                       }
+
+            kind=pars[0] ;
+          sender=pars[1] ;
+/*- - - - - - - - - - - - - - - - - - -  Проверка значения стоимости */
+         value=strtod(pars[2], &end) ;
+     if(*end!=0) {
+                  SEND_ERROR("Некорректное числовое значение") ;
+                        return(-1) ;
+                 }
+/*- - - - - - - - - - - - - - - - - - - - - - - - Изменение значения */
+#define   PRICES       this->mMsgPrices 
+#define   PRICES_CNT   this->mMsgPrices_cnt 
+
+       for(i=0 ; i<PRICES_CNT ; i++)
+         if(!stricmp(PRICES[i]->kind,   kind  ) &&
+            !stricmp(PRICES[i]->sender, sender)   ) {
+
+                        PRICES[i]->price=value ;
+                                return(0) ;
+                                                    }
+/*- - - - - - - - - - - - - - - - - - Проверка категории отправителя */
+    do {
+
+#define   NAMES       this->kernel->kernel_names         
+#define   NAMES_CNT   this->kernel->kernel_names_cnt 
+
+       for(i=0 ; i<NAMES_CNT ; i++)                                 /* Проверка по справочнику "Sender" */
+         if(!stricmp(NAMES[i]->module, "Sender") &&
+            !stricmp(NAMES[i]->name,    sender )   )  break ;
+
+         if(i<NAMES_CNT)  break ;
+
+#undef   NAMES
+#undef   NAMES_CNT
+
+#define   MODULES       this->kernel->modules 
+#define   MODULES_CNT   this->kernel->modules_cnt 
+
+
+       for(i=0 ; i<MODULES_CNT ; i++)                                  /* Проверка по типам объектов */
+         if(MODULES[i].entry->category!=NULL)  
+          if(!stricmp(MODULES[i].entry->category,      "Object") &&
+             !stricmp(MODULES[i].entry->identification, sender )   )  break ;
+
+         if(i<MODULES_CNT)  break ;
+
+#undef    MODULES
+#undef    MODULES_CNT
+
+             SEND_ERROR("Kатегория отправителя должна либо соответсвовать одному из типов объектов, "
+                        "либо быть зарегистрирована в справочнике SENDER (REFERENCE SENDER ...)"      ) ;
+                                             return(-1) ;
+       } while(0) ;
+/*- - - - - - - - - - - - - - - - - - - - - - -  Добавление значения */
+        price=(Crowd_MGas *)calloc(1, sizeof(*price)) ;
+
+       PRICES=(Crowd_MGas **)realloc(PRICES, (PRICES_CNT+1)*sizeof(*PRICES)) ;
+    if(PRICES==NULL) {
+                        SEND_ERROR("Переполнение памяти") ;
+                               return(-1) ;
+                     }
+
+                 PRICES[PRICES_CNT]=price ;
+                        PRICES_CNT++ ;
+
+          strcpy(price->kind,   kind) ;
+          strcpy(price->sender, sender) ;
+                 price->price=value ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+              }
+/*-------------------------------------------- Задание режима работы */
+   else       {
+
+      if( pars[0]==NULL) {
+                            SEND_ERROR("Не задано значение параметра: GAS 1 или GAS 0") ;
+                                  return(-1) ;
+                         }
+      else
+      if(*pars[0]== '0') {
+                             this->mGasUse=0 ;
+                         }
+      else
+      if(*pars[0]== '1') {
+                             this->mGasUse=1 ;
+                         }
+      else               {
+                            SEND_ERROR("Не задано значение параметра: GAS 1 или GAS 0") ;
+                                  return(-1) ;
+                         }
+
+              }   
+/*-------------------------------------------------------------------*/
+
+#undef   _PARS_MAX    
+
    return(0) ;
 }
 

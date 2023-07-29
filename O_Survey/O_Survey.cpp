@@ -1331,7 +1331,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      Crowd_Object_Survey::Crowd_Object_Survey(void)
 
 {
-   strcpy(Type, "Survey") ;
+   strcpy(      Type, "Survey") ;
+   strcpy(SenderType, "Survey") ;
 
    memset(behavior_model, 0, sizeof(behavior_model)) ;
           behavior_data=NULL ;

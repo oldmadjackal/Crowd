@@ -141,6 +141,18 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                     " ITCP/u <Имя> <URL>\n"
                     "   Задает URL внешнего модуля\n",
                     &Crowd_Module_External::cITcp },
+ { "sender",  "s",  "#SENDER - Задает категорию отправителя сообщений",
+                    " SENDER <Имя> <Категорию>\n"
+                    "   Задает категорию отправителя сообщений\n",
+                    &Crowd_Module_External::cSender },
+ { "gas",     "g",  "#GAS - Управление ресурсами",
+                    " GAS <Имя> <Количество>\n"
+                    "   Задает объем располагаемых ресурсов\n"
+                    " GAS/M <Имя> <Количество>\n"
+                    "   Задает максимальный объем располагаемых ресурсов\n"
+                    " GAS/R <Имя> <Количество>\n"
+                    "   Задает объем ресурсов, возобновляемых за шаг моделирования\n",
+                    &Crowd_Module_External::cGas },
 
  {  NULL }
                                                             } ;
@@ -1338,6 +1350,224 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                   strcpy(object->iface_tcp_connect, pars[1]) ;
                   strcpy(object->iface_targets,     pars[1]) ;
                }
+/*-------------------------------------------------------------------*/
+
+#undef   _PARS_MAX    
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*                                                                  */
+/*                    Реализация инструкции SENDER                  */
+/*                                                                  */
+/*       SENDER <Имя> <Категория отправителя>                       */
+
+  int  Crowd_Module_External::cSender(char *cmd)
+
+{
+#define   _PARS_MAX  10
+
+                    char  *pars[_PARS_MAX] ;
+                    char  *name ;
+                    char  *sender ;
+   Crowd_Object_External  *object ;
+                     int   u_flag ;
+                    char  *end ;
+                     int   i ;
+
+/*---------------------------------------- Разборка командной строки */
+/*- - - - - - - - - - - - - - - - - - -  Выделение ключей управления */
+                      u_flag=0 ;
+
+       if(*cmd=='/' ||
+          *cmd=='+'   ) {
+ 
+                if(*cmd=='/')  cmd++ ;
+
+                   end=strchr(cmd, ' ') ;
+                if(end==NULL) {
+                       SEND_ERROR("Некорректный формат команды") ;
+                                       return(-1) ;
+                              }
+                  *end=0 ;
+
+                if(strchr(cmd, 'u')!=NULL ||
+                   strchr(cmd, 'U')!=NULL   )  u_flag=1 ;
+
+                           cmd=end+1 ;
+                        }
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+                     name  =pars[0] ;
+                     sender=pars[1] ;
+
+/*------------------------------------------- Контроль имени объекта */
+
+    if(name==NULL) {                                                /* Если имя не задано... */
+                      SEND_ERROR("Не задано имя объекта. \n"
+                                 "Например: SENDER <Имя_объекта> ...") ;
+                                     return(-1) ;
+                   }
+
+       object=(Crowd_Object_External *)FindObject(name, 1) ;        /* Ищем объект по имени */
+    if(object==NULL)  return(-1) ;
+
+/*----------------------------------- Контроль категории отправителя */
+
+    if(sender==NULL) {
+                          SEND_ERROR("Не задано значение категории отправителя") ;
+                                             return(-1) ;
+                     }
+
+    do {
+/*- - - - - - - - - - - - - - - - - Проверка по справочнику "Sender" */
+#define   NAMES       this->kernel->kernel_names 
+#define   NAMES_CNT   this->kernel->kernel_names_cnt 
+
+       for(i=0 ; i<NAMES_CNT ; i++)
+         if(!stricmp(NAMES[i]->module, "Sender") &&
+            !stricmp(NAMES[i]->name,    sender )   )  break ;
+
+         if(i<NAMES_CNT)  break ;
+
+#undef   NAMES
+#undef   NAMES_CNT
+/*- - - - - - - - - - - - - - - - - - - - Проверка по типам объектов */
+#define   MODULES       this->kernel->modules 
+#define   MODULES_CNT   this->kernel->modules_cnt 
+
+
+       for(i=0 ; i<MODULES_CNT ; i++) 
+         if(MODULES[i].entry->category!=NULL)  
+          if(!stricmp(MODULES[i].entry->category,      "Object") &&
+             !stricmp(MODULES[i].entry->identification, sender )   )  break ;
+
+         if(i<MODULES_CNT)  break ;
+
+#undef    MODULES
+#undef    MODULES_CNT
+/*- - - - - - - - - - - - - - Если неизвестная категория отправителя */
+             SEND_ERROR("Kатегория отправителя должна либо соответсвовать одному из типов объектов, "
+                        "либо быть зарегистрирована в справочнике SENDER (REFERENCE SENDER ...)"      ) ;
+                                             return(-1) ;
+
+       } while(0) ;
+
+/*--------------------------------------------------- Пропись данных */
+
+                  strcpy(object->SenderType, sender) ;
+
+/*-------------------------------------------------------------------*/
+
+#undef   _PARS_MAX    
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*                                                                  */
+/*                    Реализация инструкции GAS                     */
+/*                                                                  */
+/*       GASE    <Имя> <Количество>                                 */
+/*       GASE/M  <Имя> <Количество>                                 */
+/*       GASE/R  <Имя> <Количество>                                 */
+
+  int  Crowd_Module_External::cGas(char *cmd)
+
+{
+#define   _PARS_MAX  10
+
+                   char  *pars[_PARS_MAX] ;
+                   char  *name ;
+  Crowd_Object_External  *object ;
+                    int   m_flag, r_flag ;
+                 double   value ;
+                   char  *end ;
+                    int   i ;
+
+/*---------------------------------------- Разборка командной строки */
+/*- - - - - - - - - - - - - - - - - - -  Выделение ключей управления */
+                      m_flag=0 ;
+                      r_flag=0 ;
+
+       if(*cmd=='/' ||
+          *cmd=='+'   ) {
+ 
+                if(*cmd=='/')  cmd++ ;
+
+                   end=strchr(cmd, ' ') ;
+                if(end==NULL) {
+                       SEND_ERROR("Некорректный формат команды") ;
+                                       return(-1) ;
+                              }
+                  *end=0 ;
+
+                if(strchr(cmd, 'm')!=NULL ||
+                   strchr(cmd, 'M')!=NULL   )  m_flag=1 ;
+           else if(strchr(cmd, 'r')!=NULL ||
+                   strchr(cmd, 'R')!=NULL   )  r_flag=1 ;
+
+                           cmd=end+1 ;
+                        }
+
+       if(m_flag+r_flag!=1) {
+                      SEND_ERROR("Может быть только один из ключей: M или R. \n"
+                                 "Например: GAS/M <Имя_объекта> ...") ;
+                                           return(-1) ;
+                            }
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
+    for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
+
+    for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
+      
+                pars[i]=end ;
+                   end =strchr(pars[i], ' ') ;
+                if(end==NULL)  break ;
+                  *end=0 ;
+                                                 }
+
+                     name= pars[0] ;
+
+/*------------------------------------------- Контроль имени объекта */
+
+    if(name==NULL) {                                                /* Если имя не задано... */
+                      SEND_ERROR("Не задано имя объекта. \n"
+                                 "Например: GAS <Имя_объекта> ...") ;
+                                     return(-1) ;
+                   }
+
+       object=(Crowd_Object_External *)FindObject(name, 1) ;        /* Ищем объект по имени */
+    if(object==NULL)  return(-1) ;
+
+/*--------------------------------------------------- Пропись данных */
+
+    if(pars[1]==NULL) {
+                          SEND_ERROR("Не задано значение параметра") ;
+                                             return(-1) ;
+                      }
+
+        value=strtod(pars[1], &end) ;
+    if(*end!=0) {
+                  SEND_ERROR("Некорректное числовое значение") ;
+                        return(-1) ;
+                }
+
+         if(m_flag)  object->gas_max  =value ;
+    else if(r_flag)  object->gas_renew=value ;
+    else             object->gas      =value ;
+
 /*-------------------------------------------------------------------*/
 
 #undef   _PARS_MAX    

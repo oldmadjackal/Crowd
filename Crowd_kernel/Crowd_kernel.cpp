@@ -57,6 +57,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  CROWD_KERNEL_API   Crowd_Message **Crowd_Kernel::kernel_messages      =NULL ; 
  CROWD_KERNEL_API             int   Crowd_Kernel::kernel_messages_cnt  =  0 ; 
 
+ CROWD_KERNEL_API      Crowd_Name **Crowd_Kernel::kernel_names         =NULL ; 
+ CROWD_KERNEL_API             int   Crowd_Kernel::kernel_names_cnt     =  0 ; 
+
  CROWD_KERNEL_API    Crowd_Kernel **Crowd_Kernel::feature_modules      =NULL ; 
  CROWD_KERNEL_API             int   Crowd_Kernel::feature_modules_cnt  =  0 ; 
 

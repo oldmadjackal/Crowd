@@ -83,6 +83,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      Crowd_Object::Crowd_Object(void)
 
 {
+   gas      =  1. ;
+   gas_max  =  1. ;
+   gas_renew=  1. ;
+
+      SenderType[0]=0 ;
+
      Parameters    =NULL ;
      Parameters_cnt=  0 ;
        Features    =NULL ;
@@ -98,7 +104,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
       x_base=0 ;
       y_base=0 ;
       z_base=0 ;
-
 }
 
 
