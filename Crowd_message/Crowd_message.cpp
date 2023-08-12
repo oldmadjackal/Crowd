@@ -46,7 +46,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     memset(Name, 0, sizeof(Name)) ;
     memset(Type, 0, sizeof(Type)) ;
     memset(Kind, 0, sizeof(Kind)) ;
-
+           Gas     = 0. ;
            Info    =NULL ;
            Object_s=NULL ;
            Object_r=NULL ;
@@ -114,6 +114,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 {
   char *name_s ;
   char *name_r ;
+
 
     if(Object_s!=NULL)  name_s=Object_s->Name ;
     else                name_s="Unknown" ;

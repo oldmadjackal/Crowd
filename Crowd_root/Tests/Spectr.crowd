@@ -55,7 +55,7 @@ broadcast create info_6 sender1 SPECTR 1,0.7,-0.5
 broadcast create info_7 sender1 SPECTR 1,0.7,-0.5
 broadcast create info_8 sender1 SPECTR 1,0.7,-0.5
 
-relay state/l Data
+;relay state/l Data
 
 relay prepare info_0 0
 relay prepare info_1 1

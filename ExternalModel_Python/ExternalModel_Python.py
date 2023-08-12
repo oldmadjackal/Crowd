@@ -31,7 +31,8 @@ __object        ={}  # Параметры объекта:
                      #   t
                      #   name
                      #   type
-                     #   x,y,z
+                     #   x, y, z
+                     #   gas, gas_max, gas_renew
                      #   links
                      #   events
 __targets       ={}  # Список объектов сцены

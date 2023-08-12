@@ -641,10 +641,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 }
 
 
-
 /*********************************************************************/
-/*								     */
-/*	          Новыe обработчики элементов                        */    
+/*                                                                   */
+/*                Новыe обработчики элементов                        */    
 
   LRESULT CALLBACK  CrowdRoot_Cmd_WndProc(  HWND  hWnd,     UINT  Msg,
 	                                  WPARAM  wParam, LPARAM  lParam) 
@@ -655,14 +654,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     char *arrow ;
    short  status ;
 
-/*-------------------------------- Проверка наличия команды в строке */
-
-        SendMessage(hWnd, WM_GETTEXT, (WPARAM)(sizeof(text)-1), (LPARAM)text) ;
-
 /*-------------------------------------- Обработка клавиш на НАЖАТИЕ */
 
   if(Msg==WM_KEYDOWN   ||
      Msg==WM_SYSKEYDOWN  ) {
+
+      SendMessage(hWnd, WM_GETTEXT,                              /* Проверка наличия команды в строке */
+          (WPARAM)(sizeof(text) - 1), (LPARAM)text);
 
                        memset(key_status, 0, sizeof(key_status)) ;
              GetKeyboardState(key_status) ;

@@ -721,12 +721,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*-------------------------------------------- Формирование описания */
 
       sprintf(text, "%s\r\n%s\r\n"
-                    "Base X % 7.3lf\r\n" 
-                    "     Y % 7.3lf\r\n" 
-                    "     Z % 7.3lf\r\n"
+                    "Base X % 10.1lf\r\n" 
+                    "     Y % 10.1lf\r\n" 
+                    "     Z % 10.1lf\r\n"
+                    "Gas    % 10.1lf\r\n"
                     "\r\n",
                         object->Name, object->Type, 
-                        object->x_base, object->y_base, object->z_base
+                        object->x_base, object->y_base, object->z_base,
+                        object->gas
                     ) ;
 
            info=text ;
@@ -1522,11 +1524,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                            cmd=end+1 ;
                         }
 
-       if(m_flag+r_flag!=1) {
+       if(m_flag+r_flag>1) {
                       SEND_ERROR("Может быть только один из ключей: M или R. \n"
                                  "Например: GAS/M <Имя_объекта> ...") ;
                                            return(-1) ;
-                            }
+                           }
 /*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
     for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
 
@@ -2048,6 +2050,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
         sprintf(value, "\"name\":\"%s\",\"t\":\"%ld\",", this->Name, t) ;
          strcat(text, value) ;  
         sprintf(value, "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\",", this->x_base, this->y_base, this->z_base) ;
+         strcat(text, value) ;  
+        sprintf(value, "\"gas\":\"%.2lf\",\"gas_max\":\"%.2lf\",\"gas_renew\":\"%.2lf\",", this->gas, this->gas_max, this->gas_renew) ;
          strcat(text, value) ;  
         sprintf(value, "\"type\":\"%s\",\r\n", this->object_type) ;
          strcat(text, value) ; 

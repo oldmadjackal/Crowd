@@ -794,6 +794,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
            char  decl[1024] ;
            char  text[1024] ;
             int  exit_flag ;
+         double  msg_gas  ;
             int  n ;
             int  i ;
 
@@ -880,6 +881,38 @@ BOOL APIENTRY DllMain( HANDLE hModule,
               if(QUEUE[n]->Object_r!=NULL    )  object=QUEUE[n]->Object_r ;
          else if(QUEUE[n]->vCheck(OBJECTS[i]))  object=OBJECTS[i] ; 
          else                                     continue ;
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Контроль ресурсов */
+                  status=0 ;
+
+      if(this->mGasUse)
+       if(QUEUE[n]->Object_s!=NULL) do {
+
+            msg_gas=this->MessageGas(QUEUE[n]) ;
+
+         if(QUEUE[n]->Object_s->gas<msg_gas) {
+                          sprintf(text, " Sender gas over for fee -  %s ", QUEUE[n]->Object_s->Name) ; 
+                      SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)text) ;
+                                               status=-1 ;
+                                                  break ;
+                                             }
+
+            QUEUE[n]->Object_s->gas-=msg_gas ;
+
+         if(QUEUE[n]->Object_r==NULL ||                             /* Если НЕ задан получатель или НЕТ трансфера ресурсов... */
+            QUEUE[n]->Gas     <= 0.    )  break ;
+
+         if(QUEUE[n]->Object_s->gas<QUEUE[n]->Gas) {
+                          sprintf(text, " Sender gas over for transfer -  %s ", QUEUE[n]->Object_s->Name) ; 
+                      SendMessage(this->mDebugDlg, WM_USER, (WPARAM)_USER_LOG, (LPARAM)text) ;
+                                                       break ;
+                                                   }
+
+            QUEUE[n]->Object_s->gas-=QUEUE[n]->Gas ;
+            QUEUE[n]->Object_r->gas+=QUEUE[n]->Gas ;
+
+                                       } while(0) ;
+
+         if(status)  break ;                                        /* Если по ресурсам дальнейшая обработка сообщения невозможна... */
 /*- - - - - - - - - - - - - - - - - - - - - - -  Обработка сообщения */
          if(mDebugDlg) {
                           sprintf(text, " Object : %s", object->Name) ; 
@@ -901,7 +934,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
                                             }
 
-       if(status)  break ;
+         if(status)  break ;
 
 /*----------------------------------------------- Отображение данных */
 
@@ -924,6 +957,20 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
             if(exit_flag)  break ;
 
+/*---------------------------------------------- Обновление ресурсов */
+
+     if(this->mGasUse) {
+
+      for(i=0 ; i<OBJECTS_CNT ; i++) {
+
+        if(OBJECTS[i]->gas_renew>0                   &&
+           OBJECTS[i]->gas      < OBJECTS[i]->gas_max  ) {
+
+                                                  OBJECTS[i]->gas+=OBJECTS[i]->gas_renew ;
+        if(OBJECTS[i]->gas> OBJECTS[i]->gas_max)  OBJECTS[i]->gas =OBJECTS[i]->gas_max  ;
+                                                         }
+                                     }
+                       }
 /*----------------------------------------------------- Главный цикл */
                      }
 
@@ -1018,3 +1065,31 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 }
 
 
+/********************************************************************/
+/*								    */
+/*              Определение расхода ресурсов на сообщение           */
+
+  double  Crowd_Module_Relay::MessageGas(Crowd_Message *msg)
+
+{
+  int  i ;
+
+#define   PRICES       this->mMsgPrices 
+#define   PRICES_CNT   this->mMsgPrices_cnt 
+
+
+    if(msg->Object_s==NULL)  return(0.) ;
+
+  for(i=0 ; i<PRICES_CNT ; i++)
+    if(!stricmp(PRICES[i]->kind,   msg->Kind                ) &&
+       !stricmp(PRICES[i]->sender, msg->Object_s->SenderType)   ) {
+
+                  return(PRICES[i]->price) ;
+                                                                  }
+
+#undef   PRICES
+#undef   PRICES_CNT
+
+
+    return(1.) ;
+}

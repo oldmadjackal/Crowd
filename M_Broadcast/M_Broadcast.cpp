@@ -82,12 +82,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
   struct Crowd_Module_Broadcast_instr  Crowd_Module_Broadcast_InstrList[]={
 
- { "help",    "?", "#HELP   - список доступных команд", 
-                    NULL,
-                   &Crowd_Module_Broadcast::cHelp   },
- { "create",  "c", "#CREATE (C)   - создать сообщение от объекта к объекту", 
-                   " CREATE <имя сообщения> <объект-отправитель> <вид сообщения> [<данные>]\n",
-                   &Crowd_Module_Broadcast::cCreate },
+ { "help",    "?",  "#HELP   - список доступных команд", 
+                     NULL,
+                    &Crowd_Module_Broadcast::cHelp   },
+ { "create",  "cr", "#CREATE (CR)   - создать сообщение от объекта к объекту", 
+                    " CREATE <имя сообщения> <объект-отправитель> <вид сообщения> [<данные>]\n",
+                    &Crowd_Module_Broadcast::cCreate },
  {  NULL }
                                                                           } ;
 
@@ -337,14 +337,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                      name_1   = pars[1] ;
                      kind     = pars[2] ;
                      info     = pars[3] ;
-
-/*------------------------------------------- Контроль имени объекта */
-
-    if(kind==NULL) {                                                /* Если имя не задано... */
+/*- - - - - - - - - - - - - - - - - - - - -  Контроль полноты данных */
+    if(kind==NULL) {                                                /* Если вид сообщения не задан... */
                       SEND_ERROR("Неверный формат сообщения. \n"
                                  "Например: CREATE <имя сообщения> <объект-отправитель> <вид сообщения> [<данные>]") ;
                                      return(-1) ;
                    }
+/*------------------------------------------- Контроль имени объекта */
 
        message=FindMessage(name_msg) ;                              /* Ищем сообщение по имени */
     if(message!=NULL) {

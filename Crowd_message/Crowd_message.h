@@ -20,6 +20,7 @@
                                char  Type[128] ;          /* Тип сообщения */
                                char  Kind[128] ;          /* Вид сообщения */
                                char *Info ;               /* Данные сообщения */
+                             double  Gas ;                /* Количество передаваемых ресурсов */
                  class Crowd_Object *Object_s ;           /* Объект-отправитель */ 
                  class Crowd_Object *Object_r ;           /* Объект-получатель */ 
 

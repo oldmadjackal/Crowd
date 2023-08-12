@@ -75,6 +75,7 @@
 
             Crowd_Object *FindObject    (char *) ;                      /* Поиск объекта по имени */ 
            Crowd_Message *FindMessage   (char *) ;                      /* Поиск сообщения по имени */ 
+                  double  MessageGas    (Crowd_Message *) ;             /* Определение расхода ресурсов на сообщение */ 
 
     public:
 	                  Crowd_Module_Relay() ;               /* Конструктор */

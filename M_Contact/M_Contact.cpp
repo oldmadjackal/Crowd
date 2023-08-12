@@ -82,12 +82,13 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
   struct Crowd_Module_Contact_instr  Crowd_Module_Contact_InstrList[]={
 
- { "help",    "?", "#HELP   - список доступных команд", 
-                    NULL,
-                   &Crowd_Module_Contact::cHelp       },
- { "create",  "c", "#CREATE (C)   - создать сообщение от объекта к объекту", 
-                   " CREATE <имя сообщения> <объект-отправитель> <объект-получатель> [<вид сообщения>] \n",
-                   &Crowd_Module_Contact::cCreate     },
+ { "help",    "?",  "#HELP   - список доступных команд", 
+                     NULL,
+                    &Crowd_Module_Contact::cHelp       },
+ { "create",  "cr", "#CREATE (CR)   - создать сообщение от объекта к объекту", 
+                    " CREATE <имя сообщения> <объект-отправитель> <объект-получатель>  <вид сообщения> [<данные>] \n"
+                    " CREATE/G <имя сообщения> <объект-отправитель> <объект-получатель> <gas>  <вид сообщения> [<данные>] \n",
+                    &Crowd_Module_Contact::cCreate     },
  {  NULL }
                                                             } ;
 
@@ -236,9 +237,17 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*--------------------------------------------- Выделение инструкции */
 
        instr=end ;                                                  /* Выделяем слово с названием команды */
-         end=strchr(instr, ' ') ;
-      if(end!=NULL) {  *end=0 ;  end++ ;  }
-      else              end="" ;
+
+     for(end=instr ; *end!= 0  &&
+                     *end!=' ' &&
+                     *end!='>' &&
+                     *end!='/'    ; end++) ;
+
+      if(*end!= 0 &&
+         *end!=' '  )  memmove(end+1, end, strlen(end)+1) ;
+
+      if(*end!=0) {  *end=0 ;  end++ ;  }
+      else            end="" ;
 
    for(i=0 ; mInstrList[i].name_full!=NULL ; i++)                   /* Ищем команду в списке */
      if(!stricmp(instr, mInstrList[i].name_full) ||
@@ -248,7 +257,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
           status=this->kernel->vExecuteCmd(cmd) ;                   /*  Пытаемся передать модулю ядра... */
        if(status)  SEND_ERROR("Секция CONTACT: Неизвестная команда") ;
-                                            return(0) ;
+                                            return(-1) ;
                                        }
  
      if(mInstrList[i].process!=NULL)                                /* Выполнение команды */
@@ -300,8 +309,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*								    */
 /*		      Реализация инструкции CREATE                  */
 /*								    */
-/*      CREATE <имя сообщения> <объект-отправитель> ...             */
-/*                    ...<объект-получатель> [<вид сообщения>]      */
+/*   CREATE   <имя сообщения> <объект-отправитель> ...              */
+/*          ...<объект-получатель> <вид сообщения> [<данные>]       */
+/*   CREATE/G  <имя сообщения> <объект-отправитель> ...             */
+/*          ...<объект-получатель> <gas> <вид сообщения> [<данные>] */
 
   int  Crowd_Module_Contact::cCreate(char *cmd)
 
@@ -313,6 +324,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                           char *name_1 ;
                           char *name_2 ;
                           char *kind ;
+                          char *info ;
+                          char *gas ;
+                           int  gas_flag ;    /* Флаг трансфера ресурсов */
                  Crowd_Message *message ;
                   Crowd_Object *object_1 ;
                   Crowd_Object *object_2 ;
@@ -322,7 +336,25 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /*---------------------------------------- Разборка командной строки */
 /*- - - - - - - - - - - - - - - - - - -  Выделение ключей управления */
-/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */        
+                        gas_flag=0 ;
+
+       if(*cmd=='/') {
+ 
+                if(*cmd=='/')  cmd++ ;
+
+                   end=strchr(cmd, ' ') ;
+                if(end==NULL) {
+                       SEND_ERROR("Некорректный формат команды") ;
+                                       return(-1) ;
+                              }
+                  *end=0 ;
+
+                if(strchr(cmd, 'g')!=NULL ||
+                   strchr(cmd, 'G')!=NULL   )  gas_flag=1 ;
+
+                           cmd=end+1 ;
+                     }
+/*- - - - - - - - - - - - - - - - - - - - - - - -  Разбор параметров */
     for(i=0 ; i<_PARS_MAX ; i++)  pars[i]=NULL ;
 
     for(end=cmd, i=0 ; i<_PARS_MAX ; end++, i++) {
@@ -333,11 +365,25 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                   *end=0 ;
                                                  }
 
-                     name_msg = pars[0] ;
-                     name_1   = pars[1] ;
-                     name_2   = pars[2] ;
-                     kind     = pars[3] ;
+                      name_msg = pars[0] ;
+                      name_1   = pars[1] ;
+                      name_2   = pars[2] ;
 
+       if(gas_flag) {
+                      gas      = pars[3] ;
+                      kind     = pars[4] ;
+                      info     = pars[5] ;
+                    } 
+       else         {
+                      kind     = pars[3] ;
+                      info     = pars[4] ;
+                    } 
+/*- - - - - - - - - - - - - - - - - - - - -  Контроль полноты данных */
+    if(kind==NULL) {                                                /* Если вид сообщения не задан... */
+                      SEND_ERROR("Неверный формат сообщения. \n"
+                                 "Например: CREATE <имя сообщения> <объект-отправитель> <вид сообщения> [<данные>]") ;
+                                     return(-1) ;
+                   }
 /*------------------------------------------- Контроль имени объекта */
 
     if(name_2==NULL) {                                              /* Если имя не задано... */
@@ -362,11 +408,25 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 #define   MESSAGES       this->kernel->kernel_messages 
 #define   MESSAGES_CNT   this->kernel->kernel_messages_cnt 
 
-
       contact=(Crowd_Message_Contact *)ProgramModule.vCreateMessage(object_1, object_2, NULL) ;
 
-                    strncpy(contact->Name, name_msg, sizeof(contact->Name)-1) ;
-    if(kind!=NULL)  strncpy(contact->Kind, kind,     sizeof(contact->Kind)-1) ;
+                     strncpy(contact->Name, name_msg, sizeof(contact->Name)-1) ;
+                     strncpy(contact->Kind, kind,     sizeof(contact->Kind)-1) ;
+
+    if(gas_flag  ) {
+                             contact->Gas=strtod(gas, &end) ;
+
+      if(contact->Gas<=0. ||
+                 *end!=0    ) {
+                          SEND_ERROR("Некорректное значение параметра Gas") ;
+                                 return(-1) ;
+                              } 
+                   } 
+
+    if(info!=NULL) {
+                             contact->Info=(char *)calloc(1, strlen(info)+8) ;
+                      strcpy(contact->Info, info) ;
+                   }
 
        MESSAGES=(Crowd_Message **)
                  realloc(MESSAGES, (MESSAGES_CNT+1)*sizeof(*MESSAGES)) ;

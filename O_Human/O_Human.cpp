@@ -701,12 +701,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*-------------------------------------------- Формирование описания */
 
       sprintf(text, "%s\r\n%s\r\n"
-                    "Base X % 7.3lf\r\n" 
-                    "     Y % 7.3lf\r\n" 
-                    "     Z % 7.3lf\r\n"
+                    "Base X % 10.1lf\r\n" 
+                    "     Y % 10.1lf\r\n" 
+                    "     Z % 10.1lf\r\n"
+                    "Gas    % 10.1lf\r\n"
                     "\r\n",
                         object->Name, object->Type, 
-                        object->x_base, object->y_base, object->z_base
+                        object->x_base, object->y_base, object->z_base,
+                        object->gas
                     ) ;
 
            info=text ;
@@ -1336,6 +1338,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 {
    strcpy(Type, "Human") ;
+
+          gas      =  1. ;
+          gas_max  =  1. ;
+          gas_renew=  1. ;
 
    memset(behavior_model, 0, sizeof(behavior_model)) ;
           behavior_data=NULL ;

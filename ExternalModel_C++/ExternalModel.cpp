@@ -1078,7 +1078,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
            int  i ;
 
   static  char *keys[]={"\"name\":\"", "\"t\":\"",
-                        "\"x\":\"",    "\"y\":\"", "\"z\":\"",
+                        "\"x\":\"",    "\"y\":\"",       "\"z\":\"",
+                        "\"gas\":\"",  "\"gas_max\":\"", "\"gas_renew\":\"",
                         "\"type\":\"",
                          NULL} ;
 
@@ -1138,11 +1139,14 @@ int APIENTRY WinMain(HINSTANCE hInstance,
        *end=0 ;
 
      if(i== 0)  strcpy(data->name, value) ;  
-     if(i== 1)         data->t     =strtol(value, &end, 10) ;
-     if(i== 2)         data->x     =strtod(value, &end) ;
-     if(i== 3)         data->y     =strtod(value, &end) ;
-     if(i== 4)         data->z     =strtod(value, &end) ;
-     if(i== 5)  strcpy(data->type, value) ;  
+     if(i== 1)         data->t        =strtol(value, &end, 10) ;
+     if(i== 2)         data->x        =strtod(value, &end) ;
+     if(i== 3)         data->y        =strtod(value, &end) ;
+     if(i== 4)         data->z        =strtod(value, &end) ;
+     if(i== 5)         data->gas      =strtod(value, &end) ;
+     if(i== 6)         data->gas_max  =strtod(value, &end) ;
+     if(i== 7)         data->gas_renew=strtod(value, &end) ;
+     if(i== 8)  strcpy(data->type, value) ;  
 
                                   } 
 /*-------------------------------------------- Разбор данных событий */
