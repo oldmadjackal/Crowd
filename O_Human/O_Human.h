@@ -74,6 +74,8 @@
                                                  
                virtual  int  vEventShow     (void) ;                                    /* Отображение результата обработки события */
 
+               virtual void  vCallBack      (Crowd_Object *, char *, char *) ;          /* Канал обратной связи */
+
                         int  iBehaviorDog   (long, char *, void *, Crowd_Kernel *) ;    /* Модель поведения - DOG */
                         int  iBehaviorSpectr(long, char *, void *, Crowd_Kernel *) ;    /* Модель поведения - SPECTR */
 

@@ -175,6 +175,9 @@
                                                       void *, Crowd_Kernel *) ;
    virtual                int  vEventShow      (void) ;                  /* Отображение результата обработки события */
 
+   virtual               void  vCallBack       (Crowd_Object *,          /* Канал обратной связи */
+                                                        char *, char *) ;
+
    virtual                int  vResetFeatures  (void *) ;                /* Сброс контекста проверки свойств */
    virtual                int  vPrepareFeatures(void *) ;                /* Подготовить свойства к проверке корректности */
    virtual                int  vCheckFeatures  (void *,                  /* Проверить корректность свойств */

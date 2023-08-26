@@ -751,7 +751,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
  static  Object  data ;
            char  prefix[512] ;
            char  text[512] ;
-           char  command[512] ;
+           char  command[4096] ;
+           char  callback[4096] ;
             int  rows_cnt ;
             int  status ;
            char *end ;
@@ -824,13 +825,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
                                                 text[0]=0 ; 
                                              command[0]=0 ;
-              status=EM_process_model(&data, command, text) ;
+                                            callback[0]=0 ;
+
+              status=EM_process_model(&data, command, callback, text) ;
            if(text[0]!=0) {
                                        LB_INS_ROW(IDC_LOG, 0, text) ;
                           } 
            if(status)        break ;
 
-              status=EM_write_response(&data, command, NULL) ;
+              status=EM_write_response(&data, command, callback, NULL) ;
            if(status) {
                              sprintf(text, "ERROR - Control file read error %d : %s", status, path) ;
                           EM_message(text) ;
@@ -879,13 +882,15 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
                                                 text[0]=0 ; 
                                              command[0]=0 ;
-              status=EM_process_model(&data, command, text) ;
+                                            callback[0]=0 ;
+
+              status=EM_process_model(&data, command, callback, text) ;
            if(text[0]!=0) {
                                        LB_INS_ROW(IDC_LOG, 0, text) ;
                           } 
            if(status)        break ;
 
-              status=EM_write_response(&data, command, NULL) ;
+              status=EM_write_response(&data, command, callback, NULL) ;
            if(status) {
                              sprintf(text, "ERROR - Control file read error %d : %s", status, path) ;
                           EM_message(text) ;
@@ -1087,13 +1092,17 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                               "\"sender\":\"", "\"receiver\":\"", "\"info\":\"",
                                NULL} ;
 
+  static  char *callback_keys[]={"\"sender\":\"", "\"msgId\":\"", "\"info\":\"",
+                               NULL} ;
+
 #define  _BUFF_MAX   64000
 
 /*---------------------------------------------------- Инициализация */
 
      if(text==NULL)  text=(char *)calloc(1, _BUFF_MAX) ;
 
-                      data->events_cnt=0 ;
+                      data->events_cnt  =0 ;
+                      data->callback_cnt=0 ;
 
 /*------------------------------------------------ Извлечение данных */
 
@@ -1222,6 +1231,75 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
                   *array_end=']' ;
 
+/*-------------------------------------------- Разбор данных ответов */
+/*- - - - - - - - - - - - - - - - - - - - - - - - -  Перебор ответов */
+        array=strstr(text, "\"callback\":[") ;
+     if(array==NULL) {
+                         sprintf(text, "Callbak section missed") ;
+                      EM_message(text) ;
+                           return(-1) ;
+                     }
+
+        array_end=strchr(array, ']') ;
+     if(array_end==NULL) {
+                             sprintf(text, "Callback section terminator missed") ;
+                          EM_message(text) ;
+                               return(-1) ;
+                         }
+
+       *array_end= 0 ;
+
+   for(element=array ; ; element=element_end+1) {
+/*- - - - - - - - - - - - - - - - - - - -  Выделение описания ответа */
+        element=strchr(element, '{') ;
+     if(element==NULL)  break ;
+
+        element_end=strchr(element, '}') ;
+     if(element_end==NULL) {
+                             sprintf(text, "Callback specifcation terminator missed") ;
+                          EM_message(text) ;
+                               return(-1) ;
+                           }
+
+       *element_end=0 ;
+
+        data->callback=(Callback *)realloc(data->callback,
+                                       sizeof(Callback)*(data->callback_cnt+1)) ;
+/*- - - - - - - - - - - - - - - - - - - - - Разбор аттрибутов ответа */
+   for(i=0 ; callback_keys[i]!=NULL ; i++) {
+
+        key=strstr(element, callback_keys[i]) ;
+     if(key==NULL) {
+                         sprintf(text, "Callback attribute %s is missed", callback_keys[i]) ;
+                      EM_message(text) ;
+                           return(-1) ;
+                   } 
+
+            memset(value, 0, sizeof(value)) ;
+           strncpy(value, key+strlen(callback_keys[i]), sizeof(value)-1) ;
+        end=strchr(value, '"')  ;
+     if(end==NULL) {
+                         sprintf(text, "Invalid value for callback attribute %s", callback_keys[i]) ;
+                      EM_message(text) ;
+                           return(-1) ;
+                   } 
+
+       *end=0 ;
+
+     if(i== 0)  strcpy(data->callback[data->callback_cnt].sender, value) ;  
+     if(i== 1)  strcpy(data->callback[data->callback_cnt].msg_id, value) ;  
+     if(i== 2)  strcpy(data->callback[data->callback_cnt].info,   value) ;  
+
+                                           } 
+
+                       data->callback_cnt++ ;
+
+                *element_end='}' ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - -  Перебор событий */
+                                                }
+
+                  *array_end=']' ;
+
 /*-------------------------------------------------------------------*/
 
     return(0) ;
@@ -1232,14 +1310,14 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 /*                                                                  */
 /*                      Запись файла ответа                         */
 
-     int  EM_write_response(Object *data, char *command, char *buff)
+     int  EM_write_response(Object *data, char *command, char *callback, char *buff)
 
 {
   char  path[FILENAME_MAX] ;
   char  flag[FILENAME_MAX] ;
   FILE *file ;
   char  value[2048] ;
-  char  text[4096] ;
+  char  text[8192] ;
 
 /*---------------------------------------------- Формирование ответа */
 
@@ -1249,7 +1327,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
          strcat(text, value) ;  
         sprintf(value, "\"x\":\"%.2lf\",\"y\":\"%.2lf\",\"z\":\"%.2lf\",\r\n", data->x, data->y, data->z) ;
          strcat(text, value) ;  
-        sprintf(value, "\"commands\":[ %s ]\r\n}\r\n", command) ;
+        sprintf(value, "\"commands\":[ %s ],\r\n", command) ;
+         strcat(text, value) ;
+        sprintf(value, "\"callback\":[ %s ]\r\n}\r\n", callback) ;
          strcat(text, value) ;
 
 /*--------------------------------------------- Запись файла ответа */
@@ -1293,14 +1373,14 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 /*                                                                  */
 /*                          Расчет модели                           */
 
-     int  EM_process_model(Object *data, char *command, char *error)
+     int  EM_process_model(Object *data, char *command, char *callback, char *error)
 
 {
    int  status ;
   char  text[1024] ;
 
 
-    if(!stricmp(data->type, "Agent"))   status=EM_model_agent(data, command, error) ;
+    if(!stricmp(data->type, "Agent"))   status=EM_model_agent(data, command, callback, error) ;
     else                              {
 
                 sprintf(text, "Неизвестная модель %s для объекта %s", data->type, data->name) ;
@@ -1330,6 +1410,26 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
      if(command[0]!=0)  strcat(command, ",\r\n") ;
                         strcat(command, text) ;
+
+   return(0) ;
+}
+
+
+/********************************************************************/
+/*                                                                  */
+/*                           Добавление ответа                      */
+
+   int  EM_cmd_callback(char *callback, char *sender, char *msg_id, char *info)
+
+{
+  char  text[4096] ;
+
+
+          sprintf(text, "{\"sender\":\"%s\",\"msgId\":\"%s\",\"info\":\"%s\"}",
+                             sender, msg_id, info) ;
+
+     if(callback[0]!=0)  strcat(callback, ",\r\n") ;
+                         strcat(callback, text) ;
 
    return(0) ;
 }

@@ -50,6 +50,7 @@ struct Crowd_Object_ExternalLink {
 
                        long  memory_t ;
                        char *memory_events ;
+                       char *memory_callback ;
 
     public:
                virtual void  vFree          (void) ;                                    /* Освободить ресурсы */
@@ -58,6 +59,8 @@ struct Crowd_Object_ExternalLink {
                virtual  int  vEvent         (long, char *, void *, Crowd_Kernel *) ;    /* Обработка события */
                                                  
                virtual  int  vEventShow     (void) ;                                    /* Отображение результата обработки события */
+
+               virtual void  vCallBack      (Crowd_Object *, char *, char *) ;          /* Канал обратной связи */
 
                         int  SendObjectsList(long) ;                                    /* Формирование и отправка списка объектов */ 
                         int  SendRequest    (long) ;                                    /* Формирование и отправка запроса на обработку */ 

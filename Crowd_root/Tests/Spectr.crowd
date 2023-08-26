@@ -45,7 +45,7 @@ ext1 ifile/t ext/objects.dat
 ;;ext1 itype TCP-SERVER agent
 ;;ext1 itcp/u 127.0.0.1:4449
 
-broadcast create info_0 sender1 SPECTR 1,0.4,0.7
+broadcast create info_0 ext1 SURVEY SPECTR
 broadcast create info_1 sender1 SPECTR 1,0.4,0.7
 broadcast create info_2 sender1 SPECTR 1,-0.5,0
 broadcast create info_3 sender1 SPECTR 1,0.6,0

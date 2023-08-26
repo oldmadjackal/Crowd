@@ -26,7 +26,7 @@ __agent_step    =""  # Размерность шага перемещения
 
 #
 #  Глобальные переменные - состояние агента и сцены
-# 
+#
 __object        ={}  # Параметры объекта:
                      #   t
                      #   name
@@ -35,11 +35,14 @@ __object        ={}  # Параметры объекта:
                      #   gas, gas_max, gas_renew
                      #   links
                      #   events
+                     #   callback
 __targets       ={}  # Список объектов сцены
 __targets_time  =""  # Временная метка списка объектов сцены
 __commands      ={}  # Команды обратной связи на сцену:
                      #   commands
                      #   messages_cnt
+__callback      ={}  # Ответы на сообщения:
+                     #   replies
 
 #------------------------------------
 #  Чтение конфигурационного файла
@@ -119,10 +122,12 @@ def read_targets(path) :
 def form_response() :
     global  __object
     global  __commands
+    global  __callback
 
     response ="{ \"name\":\"" + __object["name"] + "\",\"t\":\"" + __object["t"] + "\","
     response+="\"x\":\"" + __object["x"] + "\",\"y\":\"" + __object["y"] + "\",\"z\":\"" + __object["z"] + "\"," 
-    response+="\"commands\":[ " + __commands['commands'] + " ]}" ;
+    response+="\"commands\":[ " + __commands['commands'] + " ]," ;
+    response+="\"callback\":[ " + __callback['replies'] + " ]}" ;
 
     return response
 #------------------------------------
@@ -148,8 +153,10 @@ def send_message(msg_type:str, kind:str, recipient:str, info:str, delay:int) :
 
     __commands['messages_cnt']+=1
 
+    name    = __object['name'] + "-" + str(__commands['messages_cnt'])
+
     command ="{ \"command\":\"sendmessage\","
-    command+="\"name\":\"" + __object['name'] + "-" + str(__commands['messages_cnt']) + "\","
+    command+="\"name\":\"" + name + "\","
     command+="\"type\":\"" + msg_type + "\","
     command+="\"kind\":\"" + kind + "\","
     command+="\"recipient\":\"" + recipient + "\","
@@ -159,6 +166,21 @@ def send_message(msg_type:str, kind:str, recipient:str, info:str, delay:int) :
     if len(__commands['commands'])>0 : __commands['commands']+=","
 
     __commands['commands']+=command
+
+    return name
+#----------------------------------------------------------
+#  Добавление ответа на сообщение
+#----------------------------------------------------------
+def send_reply(sender:str, msg_id:str, data:str) :
+    global  __callback
+
+    reply ="\"sender\":\"" + sender + "\","
+    reply ="\"msgId\":\"" + msg_id + "\","
+    reply+="\"data\":\"" + data + "\"}"
+
+    if len(__callback['replies'])>0 : __callback['replies']+=","
+
+    __callback['replies']+=reply
 
     return
 #------------------------------------
@@ -170,6 +192,7 @@ def agent() :
     global  __commands
 
     __commands['commands']=""
+    __callback['replies' ]=""
 
     for event in __object['events']:
 

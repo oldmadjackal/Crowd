@@ -978,7 +978,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                              } 
          else                                {
                          SEND_ERROR("Неизвестное название цвета") ;
-                                        return(-1) ;
+                                                   return(-1) ;
                                              }
 /*------------------------------------------- Поиск объекта по имени */ 
 
@@ -1609,6 +1609,16 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 
 /********************************************************************/
+/*                                                                  */
+/*                      Канал обратной связи                        */
+
+     void  Crowd_Object_Human::vCallBack(Crowd_Object *sender, char *msg_id, char *data)
+{
+  return ;
+}
+
+
+/********************************************************************/
 /*								    */
 /*                       Модель поведения - DOG                     */
 
@@ -1712,6 +1722,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
           double   angle ;
             char  *info ;
             char  *end ;
+            char   text[1024] ;
              int   n ;
              int   i ;
              int   j ;
@@ -1820,8 +1831,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                        }
 
                            }
-/*- - - - - - - - - - - - - - - - - - - - - - - -  Реакция на сигнал */
-    if(!strcmp(message->Kind, "SPECTR"))                            /* Если спектральный сигнал... */
+/*- - - - - - - - - - - - - - - - - - - - - Реакция на сигнал SPECTR */
+    if(!strcmp(message->Kind, "SPECTR")) {                          /* Если спектральный сигнал... */
+
      if(message->Info!=NULL) {
 
             memset(info_spectr, 0, sizeof(info_spectr)) ;
@@ -1890,6 +1902,38 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                  }
 
                              }
+                                         } 
+/*- - - - - - - - - - - - - - - - - - - - - Реакция на сигнал SURVEY */
+    else
+    if(!strcmp(message->Kind, "SURVEY")) {                          /* Если опрос... */
+
+     if(message->Info!=NULL) {
+
+      if(!stricmp(message->Info, "SPECTR")) {
+
+             memset(text, 0, sizeof(text)) ;
+
+        for(j=0 ; j<_SIGNAL_MAX ; j++) {                            /* Формируем квантованный спектр */
+
+#define  VALUE  data->signal_sensitivity[j]
+
+                if    (j>0    )   strcat(text,  ",") ;
+
+                if(VALUE<-0.75)   strcat(text, "-1.0") ;
+           else if(VALUE<-0.25)   strcat(text, "-0.5") ;
+           else if(VALUE< 0.25)   strcat(text,  "0.0") ;
+           else if(VALUE< 0.75)   strcat(text,  "0.5") ;
+           else                   strcat(text,  "1.0") ;
+
+#undef  VALUE
+                                       } 
+
+         message->Object_s->vCallBack(this, message->Name, text) ;  /* Вызов обратной связи по источнику сообщения */
+                                            }
+
+                             }
+
+                                         } 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
                                 }
 /*-------------------------------------------------------------------*/

@@ -347,12 +347,22 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 
 /********************************************************************/
-/*								    */
+/*                                                                  */
 /*                   Обработка события                              */
 
      int  Crowd_Object::vEvent(long  t, char *type, void  *data, Crowd_Kernel *task)
 {
   return(0) ;
+}
+
+
+/********************************************************************/
+/*                                                                  */
+/*                      Канал обратной связи                        */
+
+     void  Crowd_Object::vCallBack(Crowd_Object *sender, char *msg_id, char *data)
+{
+  return ;
 }
 
 

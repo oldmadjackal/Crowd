@@ -47,14 +47,20 @@
 /*  Параметры модели:                                               */
 /*     Step  -  Размерность шага перемещения                        */
 
-     int  EM_model_agent(Object *data, char *command, char *error)
+     int  EM_model_agent(Object *data, char *command, char *callback, char *error)
 
 {
+    HWND  hDlg ;
   Object *sender ;
   double  r ;  
   double  angle ;
+    char  text[1024] ;
      int  i ;
      int  j ;
+
+/*---------------------------------------------------- Инициализация */
+
+                     hDlg=hConsoleDialog ;
 
 /*----------------------------------- Контроль параметров настройки  */
 
@@ -76,6 +82,12 @@
 /*----------------------------------------------- Просмотр сообщений */
 
   for(i=0 ; i<data->events_cnt ; i++) {
+
+             sprintf(text, "Event processing: name=%s  sender=%s  type=%s  kind=%s  info=%s", 
+                                       data->events[i].name, data->events[i].sender,
+                                       data->events[i].type, data->events[i].kind,
+                                       data->events[i].info ) ;
+          LB_INS_ROW(IDC_LOG, 0, text) ;
 
        if(!stricmp(data->name, data->events[i].sender))  continue ; /* Собственные сообщения игнорируем */
 
@@ -99,7 +111,19 @@
       EM_cmd_sendmessage(command, data, "Contact", "Info",          /* Зеркалирование сообщения отправителю */
                            sender->name, data->events[i].info, 0) ;
 
+      EM_cmd_callback   (callback,                                  /* Отправка ответа отправителю */
+                           sender->name, data->events[i].name, "Processed") ;
+
                                       }
+/*------------------------------------------------- Просмотр ответов */
+
+  for(i=0 ; i<data->callback_cnt ; i++) {
+
+             sprintf(text, "Callback processing: sender=%s  msg_id=%s  info=%s", 
+                              data->callback[i].sender, data->callback[i].msg_id, data->callback[i].info) ;
+          LB_INS_ROW(IDC_LOG, 0, text) ;
+
+                                        }
 /*-------------------------------------------------------------------*/
 
     return(0) ;

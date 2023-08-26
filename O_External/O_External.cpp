@@ -1657,8 +1657,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     strcpy(iface_tcp_connect,  "") ;
     strcpy(iface_targets,      "") ;
 
-        memory_t     =  0 ;
-        memory_events=NULL ;
+        memory_t       =  0 ;
+        memory_events  =NULL ;
+        memory_callback=NULL ;
 }
 
 
@@ -1738,9 +1739,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
                                  memory_t=0 ;
 
-   if(memory_events!=NULL)  free(memory_events) ;
+   if(memory_events  !=NULL)  free(memory_events) ;
+   if(memory_callback!=NULL)  free(memory_callback) ;
 
-      memory_events=(char *)calloc(8, 1) ;
+      memory_events  =(char *)calloc(8, 1) ;
+      memory_callback=(char *)calloc(8, 1) ;
 
 /*----------------------- Очистка обменных данных для внешней модели */
 
@@ -1793,9 +1796,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
    if(t!=memory_t) {
 
          memory_t=t ;
-
-     if(memory_events!=NULL)  free(memory_events) ;                 /* Инициализация массива сохранения событий */
-        memory_events=(char *)calloc(8, 1) ;
 
                 message=new Crowd_Message ;
          strcpy(message->Type, "$$EXTERNAL") ;
@@ -1913,6 +1913,34 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 
   return(0) ;
+}
+
+
+/********************************************************************/
+/*                                                                  */
+/*                      Канал обратной связи                        */
+
+     void  Crowd_Object_External::vCallBack(Crowd_Object *sender, char *msg_id, char *data)
+{
+   int  size ;
+
+                     size =256 ;
+                     size+=strlen(sender->Name) ;
+                     size+=strlen(msg_id) ;
+                     size+=strlen(data) ;
+
+          memory_callback=(char *)realloc(memory_callback, strlen(memory_callback)+size) ;
+
+       if(memory_callback[0]!=0)  strcat(memory_callback, ",\r\n") ;
+
+          sprintf(memory_callback+strlen(memory_callback), " { \"sender\":\"%s\","
+                                                           " \"msgId\":\"%s\","
+                                                            "\"info\":\"%s\" }", 
+                                                               sender->Name,
+                                                               msg_id,
+                                                               data    ) ;
+
+  return ;
 }
 
 
@@ -2079,11 +2107,27 @@ BOOL APIENTRY DllMain( HANDLE hModule,
         sprintf(value, "\"events\":[\r\n") ;                        /* Список событий */
          strcat(text, value) ; 
          strcat(text, this->memory_events) ; 
+        sprintf(value, "\r\n],\r\n") ;
+         strcat(text, value) ; 
+
+        sprintf(value, "\"callback\":[\r\n") ;                      /* Ответы на сообщения */
+         strcat(text, value) ; 
+         strcat(text, this->memory_callback) ; 
         sprintf(value, "\r\n]\r\n") ;
          strcat(text, value) ; 
 
-         strcat(text, "}");
-/*- - - - - - - - - - - - - -  Отправка запроса через интерфейс FILE */
+         strcat(text, "}") ;
+
+/*--------------------------------------- Очистка накопителей данных */
+
+     if(memory_events  !=NULL)  free(memory_events) ;               /* Инициализация массива сохранения событий */
+     if(memory_callback!=NULL)  free(memory_callback) ;             /* Инициализация массива сохранения обратной связи */
+
+        memory_events  =(char *)calloc(8, 1) ;
+        memory_callback=(char *)calloc(8, 1) ;
+
+/*---------------------------- Отправка запроса через интерфейс FILE */
+
    if(!stricmp(this->iface_type, "FILE")) {
                          
                                     strcpy(name, this->iface_file_control) ;
@@ -2140,7 +2184,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
            FILE *file ;
            char  em_name[128] ;
            long  em_t ;
-           char  em_commands[4096] ;
+    static char *em_commands ;
+    static char *em_callback ;
             int  status ;
            char  command[128] ;
            char  value[1024] ;
@@ -2149,7 +2194,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
            char *cmd_end ;
   Crowd_Message  cmd_message ;
   Crowd_Message *message ;
+   Crowd_Object *sender ;
    Crowd_Kernel *msg_module ;
+           char  msg_id[128] ;
+           char  msg_sender[128] ;
            char  msg_receiver[128] ;
            char  msg_info[1024] ;
             int  msg_delay ; 
@@ -2163,6 +2211,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                         "\"y\":\"",
                         "\"z\":\"",
                         "\"commands\":[",
+                        "\"callback\":[",
                             NULL} ;
 
 //  {"command":"sendmessage","name":"ext1-1","type":"Contact","kind":"Info","recipient":"sender1","info":"spectr:1,0.7,-0.5","delay":"0"}
@@ -2174,6 +2223,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                            "\"delay\":\"",
                             NULL} ;
 
+//  {"sender":"ext1","msgId":"ext1-1-0001","info":"1,0.7,-0.5"}
+  static  char *cb_keys[]={"\"sender\":\"",
+                           "\"msgId\":\"",
+                           "\"info\":\"",
+                            NULL} ;
+
   static  char *text ;
 
 #undef   _BUFF_MAX
@@ -2181,7 +2236,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 /*---------------------------------------------------- Инициализация */
 
-    if(text==NULL)  text=(char *)calloc(_BUFF_MAX, 1) ;
+    if(text       ==NULL)  text       =(char *)calloc(_BUFF_MAX, 1) ;
+    if(em_commands==NULL)  em_commands=(char *)calloc(_BUFF_MAX, 1) ;
+    if(em_callback==NULL)  em_callback=(char *)calloc(_BUFF_MAX, 1) ;
 
 /*-------------------------------------- Ожидание результата расчета */
 
@@ -2274,6 +2331,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      if(i== 3)         this->y_base    = strtod(value, &end) ;
      if(i== 4)         this->z_base    = strtod(value, &end) ;
      if(i== 5)  strcpy(em_commands, value) ;
+     if(i== 6)  strcpy(em_callback, value) ;
 
                                   } 
 /*----------------------------- Контроль соответствия ответа запросу */
@@ -2407,6 +2465,61 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                                                 }
 /*- - - - - - - - - - - - - - - - - - -  Переход к следующей команде */
             memmove(em_commands, cmd_end+1, strlen(cmd_end+1)+1) ;
+
+                          } 
+/*-------------------------------- Формирование ответов на сообщения */
+
+  while(em_callback[0]!=0) {
+
+         cmd=strchr(em_callback, '{') ;
+      if(cmd==NULL)   break ;
+
+         cmd_end=strchr(cmd, '}') ;
+      if(cmd_end==NULL)  {
+                              sprintf(text, "Callback element terminator ']' missed") ;
+                           SEND_ERROR(text) ;
+                                return(-1) ;
+                         }             
+
+        *cmd_end=0 ;
+/*- - - - - - - - - - - - - - - - - - - - - - - - Регистрация ответа */
+//  "sender":"...","msgId":"...",info":"..."
+     for(i=0 ; cb_keys[i]!=NULL ; i++) {                            /* Разбор атрибутов команды */
+
+          key=strstr(cmd, cb_keys[i]) ;
+       if(key==NULL) {
+                           sprintf(text, "Callback - parameter %s is missed", cb_keys[i]) ;
+                        SEND_ERROR(text) ;
+                             return(-1) ;
+                     } 
+
+            memset(value, 0, sizeof(value)) ;
+           strncpy(value, key+strlen(cb_keys[i]), sizeof(value)-1) ;
+
+          end=strchr(value, '"')  ;
+       if(end==NULL) {
+                         sprintf(text, "Callback - invalid value for parameter %s", cb_keys[i]) ;
+                      SEND_ERROR(text) ;
+                           return(-1) ;
+                   } 
+
+         *end=0 ;
+
+       if(i== 0)  strcpy(msg_sender, value) ;  
+       if(i== 1)  strcpy(msg_id,     value) ;  
+       if(i== 2)  strcpy(msg_info,   value) ;  
+                                       } 
+
+          sender=ProgramModule.FindObject(msg_sender, 0) ;
+       if(sender==NULL) {
+                           sprintf(text, "Callback - unwnown sender: %s", msg_sender) ;
+                        SEND_ERROR(text) ;
+                             return(-1) ;
+                        }
+
+          sender->vCallBack(this, msg_id, msg_info) ; 
+/*- - - - - - - - - - - - - - - - - - -  Переход к следующему ответу */
+            memmove(em_callback, cmd_end+1, strlen(cmd_end+1)+1) ;
 
                           } 
 /*-------------------------------------------------------------------*/

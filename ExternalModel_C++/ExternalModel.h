@@ -91,6 +91,13 @@
                       char  info[1024] ;              /* Информация */
 
                  } Event ;
+
+  typedef struct {                                   /* Параметры ответа */
+                      char  sender[128] ;             /* Отправитель ответа */
+                      char  msg_id[128] ;             /* Идентификатор исходного сообщения */
+                      char  info[4096] ;              /* Информация */
+
+                 } Callback ;
   
   typedef struct {                                   /* Параметры объекта */
                       char  name[128] ;               /* Название */
@@ -100,6 +107,8 @@
                     double  gas, gas_max, gas_renew ; /* Ресурсы объекта: текущие, максимально возможные, циклическое обновление */
                      Event *events ;                  /* События */
                        int  events_cnt ;
+                  Callback *callback ;                /* Ответы */
+                       int  callback_cnt ;
 
                  } Object ;
 
@@ -130,11 +139,15 @@
      int  EM_read_targets   (char *, int) ;                  /* Считывание файла целей */
      int  EM_read_request   (char *, Object *, int) ;        /* Считывание файла запроса */
      int  EM_read_request2  (char *, Object *, int) ;        /* Считывание файла запроса, сокращенная форма */
-     int  EM_write_response (Object *, char *, char *) ;     /* Записать файл ответа */
-     int  EM_process_model  (Object *, char *, char *) ;     /* Расчет модели */
+     int  EM_write_response (Object *,                       /* Записать файл ответа */
+                               char *, char *, char *) ;
+     int  EM_process_model  (Object *,                       /* Расчет модели */
+                               char *, char *, char *) ;
 
      int  EM_cmd_sendmessage(char *, Object *,               /* Добавление команды "Отправить сообщение" */
                              char *, char *, char *, char *, int) ;
+     int  EM_cmd_callback   (char *,                         /* Добавление ответа */
+                             char *, char *, char *) ;
 
     DWORD WINAPI  FilesIface_Tread   (LPVOID) ;
     DWORD WINAPI  Model_Process_Tread(LPVOID) ;
@@ -143,5 +156,5 @@
 INT_PTR CALLBACK  EM_console_dialog(HWND, UINT, WPARAM, LPARAM) ;
 
 /* EM_agent.cpp */
-             int  EM_model_agent(Object *, char *, char *) ;        /* Реализация модели агента */
+             int  EM_model_agent(Object *, char *, char *, char *) ;    /* Реализация модели агента */
 
