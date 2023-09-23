@@ -1189,7 +1189,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
     if(object->behavior_model[0]!=0) {
 
-      if(!stricmp(object->behavior_model, "$DOG"   ))   object->iBehaviorDefault(0, "GET_PROFILE", (void *)&profile, NULL) ;
+      if(!stricmp(object->behavior_model, "$DEFAULT"))   object->iBehaviorDefault(0, "GET_PROFILE", (void *)&profile, NULL) ;
       else                                            {
 
                             SEND_ERROR("Неизвестная модель поведения") ;
@@ -1334,8 +1334,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
    strcpy(      Type, "Survey") ;
    strcpy(SenderType, "Survey") ;
 
-   memset(behavior_model, 0, sizeof(behavior_model)) ;
+   strcpy(behavior_model, "$DEFAULT") ;
           behavior_data=NULL ;
+
+   memset(surveys, 0, sizeof(surveys)) ;
 }
 
 
@@ -1417,13 +1419,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 /*                   Обработка события                              */
 
      static         Crowd_Kernel *EventTask ;
-     static  Crowd_Object_Survey *EventObject ;
 
 
      int  Crowd_Object_Survey::vEvent(long  t, char *type, void  *data, Crowd_Kernel *task)
 {
    char  error[1024] ;
 
+
+                    EventTask= task ;
 
      if(!stricmp(this->behavior_model, "$DEFAULT"))   this->iBehaviorDefault(t, type, data, task) ;
      else                                           {
@@ -1463,6 +1466,80 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 }
 
 
+/*********************************************************************/
+/*                                                                   */
+/*                      Канал обратной связи                         */
+
+     void  Crowd_Object_Survey::vCallBack(Crowd_Object *sender, char *msg_id, char *data)
+{
+   int  s_id ;
+  char  answers[1024] ;
+  char *answer ;
+   int  q_id ;
+  char  question[128] ;
+  char *end ;
+  char  text[1024] ;
+   int  i ;
+
+/*--------------------------------------------- Идентификация опроса */
+
+     for(s_id=0 ; s_id<_SURVEYS_MAX ; s_id++)
+       if(!stricmp(msg_id, surveys[s_id].request_id))  break ;
+
+       if(s_id>=_SURVEYS_MAX) {
+                                   sprintf(text, "SURVEY - vCallBack - Неизвестный опрос: %s", msg_id) ;
+                                SEND_ERROR(text) ;
+                                     return ;
+                              } 
+/*------------------------------------------ Обработка ответа SPECTR */
+
+   if(!stricmp(surveys[s_id].type, "SPECTR")) {
+//   X0,X1,...,Xn
+
+        memset(answers, 0, sizeof(answers)) ;
+       strncpy(answers, data, sizeof(answers)-1) ;
+
+     for(q_id=0, answer=answers, end=answers ; end!=NULL ;
+         q_id++, answer=end+1                              ) {
+
+           end=strchr(answer, ',') ;
+        if(end!=NULL)  *end=0 ; 
+
+            sprintf(question, "%d", q_id) ;
+
+#define  A  surveys[s_id].answers
+
+       for(i=0 ; i<surveys[s_id].answers_cnt ; i++)
+         if(!stricmp(A[i].question, question) &&
+            !stricmp(A[i].answer,   answer  )   )  break ;
+
+         if(i<surveys[s_id].answers_cnt) {
+                                            A[i].cnt++ ;
+                                         }
+         else                            {
+
+                                     surveys[s_id].answers_cnt++ ;
+              A=(Answer *)realloc(A, surveys[s_id].answers_cnt*sizeof(Answer)) ;
+
+                                    i =surveys[s_id].answers_cnt-1 ;
+                           strcpy(A[i].question, question) ;
+                           strcpy(A[i].answer,   answer  ) ;
+                                  A[i].cnt=1 ;
+
+                                         }
+
+#undef    A
+
+                                                             }
+
+                                              }
+/*-------------------------------------------------------------------*/
+
+
+  return ;
+}
+
+
 /********************************************************************/
 /*                                                                  */
 /*                    Модель поведения - DEFAULT                    */
@@ -1470,8 +1547,16 @@ BOOL APIENTRY DllMain( HANDLE hModule,
      int  Crowd_Object_Survey::iBehaviorDefault(long  t, char *event_type, void *event_data, Crowd_Kernel *task)
 {
    Crowd_Message  *message ;
+   Crowd_Message  *request ;
+   Crowd_Message  *selfcall ;
   struct Default  *data ;
   struct Profile **profile_ext ;
+    Crowd_Kernel  *msg_module ;
+             int   s_id ;
+             int   status ;
+            char  *question ;
+            char   text[1024] ; 
+             int   i ;
              int   j ;
 
   static  struct Profile  profile[]={
@@ -1482,6 +1567,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             { "" } 
                                     } ; 
 
+#define   _JSON_SIZE     640000
+    static  char  *json ;
+
 /*==================================================== Инициализация */
 
    if(behavior_data==NULL) {
@@ -1489,6 +1577,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
             behavior_data=(void *)calloc(1, sizeof(struct Default)) ;
                      data=(struct Default *)behavior_data ;
 
+                     json=(char *)calloc(1, _JSON_SIZE) ;
 
     for(j=0 ; j<this->Features_cnt ; j++)                           /* Извлекаем ссылку на цвет */
       if(!stricmp(this->Features[j]->Type, "Show"))  
@@ -1530,21 +1619,139 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                         return(0) ;
                                            }
 /*- - - - - - - - - - - - - - - - - - - - Отложенные запросы на себя */
+     if(!stricmp(message->Type, "SurveyResponse")) {
 
+         for(s_id=0 ; s_id<_SURVEYS_MAX ; s_id++)                   /* Идентификация опроса */
+           if(!stricmp(message->Kind, surveys[s_id].request_id))  break ;
+
+           if(s_id>=_SURVEYS_MAX) {
+                                      sprintf(text, "SURVEY - SurveyResponse - Неизвестный опрос: %s", message->Kind) ;
+                                   SEND_ERROR(text) ;
+                                        return(-1) ;
+                                  } 
+
+#define   A      surveys[s_id].answers
+#define   A_CNT  surveys[s_id].answers_cnt
+
+               strcpy(json, "[") ;
+
+       do {
+
+         for(i=0 ; i<A_CNT ; i++)
+           if(A[i].cnt!=0) {  question=A[i].question ;  break ;  } 
+
+           if(i>=A_CNT)  break ;
+
+           if(strlen(json)>1)  strcat(json, ", ") ;
+
+              sprintf(text, "{ \"question\":\"%s\"", question) ;
+               strcat(json, text) ;
+
+         for(i=0 ; i<A_CNT ; i++)
+           if(!stricmp(A[i].question, question)) {
+
+              sprintf(text, ", \"%s\":%d", A[i].answer, A[i].cnt) ;
+               strcat(json, text) ;
+
+                    A[i].cnt=0 ;
+                                                 } 
+
+               strcat(json, "}") ;
+
+          } while(1) ;
+
+               strcat(json, "]") ;
+
+#undef    A
+#undef    A_CNT
+
+         surveys[s_id].customer->vCallBack(this, surveys[s_id].parent_id, json) ;
+                                                 surveys[s_id].parent_id[0]=0 ;
+
+                                                   }
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
                                 }
 /*------------------------------------------------ Внешнее сообщение */
 
     else                        {
-/*- - - - - - - - - - - - - - - - - - - - - - - -  Реакция на сигнал */
-                *(data->color)=RGB(0, 255, 255) ;
+/*- - - - - - - - - - - - - - - - - - - - - Реакция на сигнал SURVEY */
+    if(!strcmp(message->Kind, "SURVEY")) {                          /* Если опрос... */
 
-/*
-          this->x_base+=(message->Object_s->x_base-this->x_base)*data->energy ;
-          this->y_base+=(message->Object_s->y_base-this->y_base)*data->energy ;
+       if(message->Object_r==NULL) {                                /* Пропускаем широковещательные запросы... */
+                                          return(0) ;
+                                   }
 
-     if(t>data->endurance) data->energy = data->energy*(1.-data->weariness) ;
-*/
+           for(s_id=0 ; s_id<_SURVEYS_MAX ; s_id++)
+             if(surveys[s_id].parent_id[0]==0)  break ;
+
+             if(s_id>=_SURVEYS_MAX) {
+                                          sprintf(text, "SURVEY - Переполнение списка опросов") ;
+                                       SEND_ERROR(text) ;
+                                            return(-1) ;
+                                    } 
+
+     if(         message->Info==NULL     ) {
+                                           }
+     else
+     if(!stricmp(message->Info, "SPECTR")) {
+
+#define  KERNEL  ProgramModule.kernel
+
+        for(i=0 ; i<KERNEL->modules_cnt ; i++)                      /* Поиск модуля, формирующего Broadcast-сообщения */
+          if(!stricmp(KERNEL->modules[i].entry->identification, 
+                                     "Broadcast"               )) {
+                     msg_module=KERNEL->modules[i].entry ;
+                            break ;
+                                                                  }
+ 
+          if(i>=KERNEL->modules_cnt) {                              /* Если такой модуль не найден... */
+                                          sprintf(text, "SURVEY - Не найден модуль Broadcast") ;
+                                       SEND_ERROR(text) ;
+                                            return(-1) ;
+                                     }
+#undef   KERNEL
+
+                                                                    /* Создание сообщения-опроса */ 
+                 request=msg_module->vCreateMessage(this, NULL, NULL) ;
+
+                                                       this->message_cnt++ ;
+         sprintf(request->Name, "%s-%08d", this->Name, this->message_cnt) ;
+          strcpy(request->Kind, "SURVEY") ;
+
+                 request->Info=(char *)calloc(1, strlen("SPECTR")+1) ;
+          strcpy(request->Info, "SPECTR") ;
+
+          status=EventTask->vAddMessage(request, 1) ;               /* Постановка сообщения-опроса в очередь */
+       if(status) {
+                         sprintf(text, "SURVYE - request queuing up error") ;
+                      SEND_ERROR(text) ;
+                           return(-1) ;
+                  }
+
+                 selfcall=new Crowd_Message ;                       /* Создание сообщения-самовызова для возврата результата опроса заказчику */
+          strcpy(selfcall->Type, "SurveyResponse") ;
+          strcpy(selfcall->Kind, request->Name) ;
+                 selfcall->Object_s=NULL ;
+                 selfcall->Object_r=this ; 
+
+          status=EventTask->vAddMessage(selfcall, 1+2) ;            /* Постановка сообщения-самовызова в очередь */
+       if(status) {
+                         sprintf(text, "SURVYE - selfcall queuing up error") ;
+                      SEND_ERROR(text) ;
+                           return(-1) ;
+                  }
+
+              strcpy(surveys[s_id].parent_id,  message->Name) ;
+              strcpy(surveys[s_id].request_id, request->Name) ;
+              strcpy(surveys[s_id].type,       "SPECTR") ;
+                     surveys[s_id].customer   =message->Object_s ;
+                     surveys[s_id].t_reply    = t+1+2 ;
+                     surveys[s_id].answers    = NULL ;
+                     surveys[s_id].answers_cnt=   0 ;
+
+                                           }
+
+                                         } 
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
                                 }
 /*-------------------------------------------------------------------*/

@@ -32,6 +32,24 @@
                   } ;
 /*----------------------- Описание класса объекта "Оператор опросов" */
 
+   struct Answer {
+                    char  question[64] ;
+                    char  answer[64] ;
+                     int  cnt ;
+                 } ;  
+
+   struct Survey {
+                     char  parent_id[128] ;   /* Название входящего сообщения-запроса */
+             Crowd_Object *customer ;         /* Объект-заказчик */
+                     char  request_id[128] ;  /* Название исходящего сообщения-опроса */
+                     char  type[128] ;        /* Тип опроса */
+                      int  t_reply ;          /* Время отдачи ответа */
+                   Answer *answers ;          /* Список вопросов-ответов */   
+                      int  answers_cnt ;
+                 } ;
+
+#define  _SURVEYS_MAX  10
+
   class O_SURVEY_API Crowd_Object_Survey : public Crowd_Object {
 
     public:
@@ -40,6 +58,8 @@
                       char  behavior_model[128] ;                 /* Название встроенной модели поведения */
                       void *behavior_data ;                       /* Данные встроенной модели поведения */
 
+                    Survey  surveys[_SURVEYS_MAX] ;               /* Контекст опросов */
+ 
     public:
                virtual void  vFree           (void) ;                                    /* Освободить ресурсы */
                virtual void  vWriteSave      (std::string *) ;                           /* Записать данные в строку */
@@ -47,6 +67,8 @@
                virtual  int  vEvent          (long, char *, void *, Crowd_Kernel *) ;    /* Обработка события */
                                                  
                virtual  int  vEventShow      (void) ;                                    /* Отображение результата обработки события */
+
+               virtual void  vCallBack       (Crowd_Object *, char *, char *) ;          /* Канал обратной связи */
 
                         int  iBehaviorDefault(long, char *, void *, Crowd_Kernel *) ;    /* Модель поведения - DEFAULT */
 
